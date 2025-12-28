@@ -21,6 +21,29 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Root route
+app.get('/', (req: Request, res: Response) => {
+  res.json({ 
+    message: 'FilmMood API', 
+    version: '1.0.0',
+    author: 'Abdullah Alakberli',
+    status: 'running',
+    endpoints: {
+      health: '/health',
+      api: '/api',
+      auth: '/api/auth',
+      movies: '/api/movies',
+      moods: '/api/moods',
+      comments: '/api/comments',
+      reviews: '/api/reviews',
+      discussions: '/api/discussions',
+      favorites: '/api/favorites',
+      watchLater: '/api/watch-later',
+      ai: '/api/ai'
+    }
+  });
+});
+
 // Health check
 app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'FilmMood API is running' });
