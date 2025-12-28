@@ -220,7 +220,13 @@ const AIChatAssistant = ({ favorites, watchLater, onMovieSelect }: AIChatAssista
                       {message.recommendations.map((movie) => (
                         <div 
                           key={movie.id}
-                          onClick={() => onMovieSelect?.(movie)}
+                          onClick={() => {
+                            if (onMovieSelect) {
+                              onMovieSelect(movie);
+                              // Close chat window after selecting movie
+                              setIsOpen(false);
+                            }
+                          }}
                           className="flex gap-3 p-2 rounded-lg bg-background/50 hover:bg-background/80 cursor-pointer transition-colors"
                         >
                           <img 

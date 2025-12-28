@@ -76,6 +76,44 @@ const Index = () => {
     handleMoodSelect(randomMood.id);
   };
 
+  const handleMovieSelectFromAI = (movie: Movie) => {
+    // Set the mood to match the movie's mood
+    handleMoodSelect(movie.mood);
+    
+    // Scroll to top of page first to ensure movies section is visible
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Scroll to movies section after a delay to allow state update and render
+    setTimeout(() => {
+      const moviesSection = document.getElementById('movies-section');
+      if (moviesSection) {
+        // Calculate offset for header
+        const headerOffset = 80;
+        const elementPosition = moviesSection.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      } else {
+        // If section not found, scroll to top and wait a bit more
+        setTimeout(() => {
+          const moviesSection = document.getElementById('movies-section');
+          if (moviesSection) {
+            const headerOffset = 80;
+            const elementPosition = moviesSection.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        }, 300);
+      }
+    }, 200);
+  };
+
   const handleNextRecommendation = () => {
     setIsLoading(true);
     setTimeout(() => setIsLoading(false), 300);
@@ -216,7 +254,7 @@ const Index = () => {
               )}
 
               {/* Movie Grid */}
-              <div className="flex-1">
+              <div id="movies-section" className="flex-1">
                 {isLoading ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                     {[...Array(6)].map((_, i) => (
@@ -275,6 +313,7 @@ const Index = () => {
       <AIChatAssistant 
         favorites={favorites}
         watchLater={watchLater}
+        onMovieSelect={handleMovieSelectFromAI}
       />
     </div>
   );

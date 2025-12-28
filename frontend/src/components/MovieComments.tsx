@@ -75,19 +75,19 @@ const MovieComments = ({ movieId }: MovieCommentsProps) => {
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <MessageCircle className="w-4 h-4" />
-        <span>{movieComments.length} şərh</span>
+        <span>{comments.length} şərh</span>
       </button>
 
       {isOpen && (
         <div className="mt-3 space-y-3 animate-fade-in">
-          <ScrollArea className={cn("pr-2", movieComments.length > 3 && "h-48")}>
+          <ScrollArea className={cn("pr-2", comments.length > 3 && "h-48")}>
             <div className="space-y-3">
-              {movieComments.length === 0 ? (
+              {comments.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
                   İlk şərhi sən yaz!
                 </p>
               ) : (
-                movieComments.map((comment) => (
+                comments.map((comment) => (
                   <div
                     key={comment.id}
                     className="p-3 rounded-lg bg-muted/30 border border-border/30"
