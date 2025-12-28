@@ -47,6 +47,12 @@ SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
    - Navigate to SQL Editor
    - Run the SQL script from `src/database/schema.sql` to create all necessary tables
 
+4. **Seed the database with initial data:**
+   ```bash
+   npm run seed
+   ```
+   This will populate the `moods` and `movies` tables with initial data.
+
 ## Running the Server
 
 ### Development

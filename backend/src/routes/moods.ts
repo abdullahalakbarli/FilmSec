@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { moods } from '../data/moods';
+import { getMoods, getMoodById } from '../database/database';
 
 const router = Router();
 
 // Get all moods
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
+    const moods = await getMoods();
     res.json(moods);
   } catch (error) {
     console.error('Get moods error:', error);
@@ -14,10 +15,10 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 // Get mood by ID
-router.get('/:id', (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const mood = moods.find(m => m.id === id);
+    const mood = await getMoodById(id);
 
     if (!mood) {
       return res.status(404).json({ error: 'Mood not found' });

@@ -135,7 +135,7 @@ const Auth = () => {
               <Film className="w-8 h-8 text-primary-foreground" />
             </div>
             <div>
-              <CardTitle className="text-2xl">Bu Gün Nə Baxım?</CardTitle>
+              <CardTitle className="text-2xl">FilmSEC</CardTitle>
               <CardDescription className="mt-2">
                 Film tövsiyələri üçün hesabınıza daxil olun
               </CardDescription>

@@ -8,8 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Mood } from '@/types/movie';
 import { moods } from '@/data/moods';
 
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
+
 interface CreateDiscussionProps {
-  onCreateDiscussion: (mood: Mood, title: string, description: string, username: string) => void;
+  onCreateDiscussion: (mood: Mood, title: string, description: string) => Promise<{ error?: string }>;
 }
 
 const CreateDiscussion = ({ onCreateDiscussion }: CreateDiscussionProps) => {
@@ -17,16 +20,27 @@ const CreateDiscussion = ({ onCreateDiscussion }: CreateDiscussionProps) => {
   const [mood, setMood] = useState<Mood | ''>('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [username, setUsername] = useState('');
+  const { user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mood && title.trim() && description.trim() && username.trim()) {
-      onCreateDiscussion(mood, title.trim(), description.trim(), username.trim());
-      setMood('');
-      setTitle('');
-      setDescription('');
-      setIsOpen(false);
+    if (!user) {
+      toast({
+        title: 'Giriş tələb olunur',
+        description: 'Müzakirə yaratmaq üçün giriş edin',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (mood && title.trim() && description.trim()) {
+      const result = await onCreateDiscussion(mood, title.trim(), description.trim());
+      if (!result.error) {
+        setMood('');
+        setTitle('');
+        setDescription('');
+        setIsOpen(false);
+      }
     }
   };
 
@@ -43,15 +57,6 @@ const CreateDiscussion = ({ onCreateDiscussion }: CreateDiscussionProps) => {
           <DialogTitle>Yeni müzakirə başlat</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Adınız</label>
-            <Input
-              placeholder="Adınızı daxil edin"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-
           <div className="space-y-2">
             <label className="text-sm font-medium">Mood seçin</label>
             <Select value={mood} onValueChange={(value) => setMood(value as Mood)}>
@@ -90,7 +95,7 @@ const CreateDiscussion = ({ onCreateDiscussion }: CreateDiscussionProps) => {
           <Button
             type="submit"
             className="w-full gap-2"
-            disabled={!mood || !title.trim() || !description.trim() || !username.trim()}
+            disabled={!mood || !title.trim() || !description.trim() || !user}
           >
             <Send className="w-4 h-4" />
             Müzakirə başlat

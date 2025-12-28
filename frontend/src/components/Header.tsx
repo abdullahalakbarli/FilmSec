@@ -37,7 +37,7 @@ const Header = ({ favoritesCount, watchLaterCount, onFavoritesClick, onWatchLate
             <Film className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="text-xl font-bold tracking-tight hidden sm:block">
-            Bu Gün Nə Baxım?
+            FilmSEC
           </span>
         </button>
 

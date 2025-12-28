@@ -2,17 +2,19 @@ import { useState } from 'react';
 import { MessageSquare, ThumbsUp, Send, User, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Discussion, Mood } from '@/types/movie';
 import { cn } from '@/lib/utils';
 import { moods } from '@/data/moods';
 
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
+
 interface DiscussionCardProps {
   discussion: Discussion;
-  onAddReply: (discussionId: string, username: string, content: string) => void;
-  onLikeReply: (discussionId: string, replyId: string) => void;
+  onAddReply: (discussionId: string, content: string) => Promise<{ error?: string }>;
+  onLikeReply: (discussionId: string, replyId: string) => Promise<{ error?: string }>;
 }
 
 const moodColors: Record<Mood, string> = {
@@ -26,17 +28,57 @@ const moodColors: Record<Mood, string> = {
 
 const DiscussionCard = ({ discussion, onAddReply, onLikeReply }: DiscussionCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [username, setUsername] = useState('');
   const [content, setContent] = useState('');
+  const { user } = useAuth();
 
   const moodInfo = moods.find((m) => m.id === discussion.mood);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim() && content.trim()) {
-      onAddReply(discussion.id, username.trim(), content.trim());
-      setContent('');
+    if (!user) {
+      toast({
+        title: 'Giriş tələb olunur',
+        description: 'Cavab yazmaq üçün giriş edin',
+        variant: 'destructive',
+      });
+      return;
     }
+
+    const trimmedContent = content.trim();
+    console.log('DiscussionCard handleSubmit:', { content, trimmedContent, length: trimmedContent.length });
+    
+    if (!trimmedContent || trimmedContent.length === 0) {
+      toast({
+        title: 'Xəta',
+        description: 'Cavab boş ola bilməz',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const result = await onAddReply(discussion.id, trimmedContent);
+    if (result && !result.error) {
+      setContent('');
+    } else if (result && result.error) {
+      toast({
+        title: 'Xəta',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleLike = async (replyId: string) => {
+    if (!user) {
+      toast({
+        title: 'Giriş tələb olunur',
+        description: 'Bəyənmək üçün giriş edin',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    await onLikeReply(discussion.id, replyId);
   };
 
   const formatDate = (dateStr: string) => {
@@ -107,11 +149,11 @@ const DiscussionCard = ({ discussion, onAddReply, onLikeReply }: DiscussionCardP
                     </div>
                     <p className="text-sm text-foreground/80 mb-2">{reply.content}</p>
                     <button
-                      onClick={() => onLikeReply(discussion.id, reply.id)}
+                      onClick={() => handleLike(reply.id)}
                       className="flex items-center gap-1 text-xs text-muted-foreground hover:text-mood-romantic transition-colors"
                     >
                       <ThumbsUp className="w-3 h-3" />
-                      <span>{reply.likes}</span>
+                      <span>{reply.likes || 0}</span>
                     </button>
                   </div>
                 ))
@@ -120,24 +162,19 @@ const DiscussionCard = ({ discussion, onAddReply, onLikeReply }: DiscussionCardP
           </ScrollArea>
 
           <form onSubmit={handleSubmit} className="mt-4 space-y-2">
-            <Input
-              placeholder="Adınız"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="text-sm h-9"
-            />
             <div className="flex gap-2">
               <Textarea
-                placeholder="Cavabınızı yazın..."
+                placeholder={user ? "Cavabınızı yazın..." : "Cavab yazmaq üçün giriş edin"}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="text-sm min-h-[60px] resize-none flex-1"
+                disabled={!user}
               />
               <Button
                 type="submit"
                 size="icon"
                 className="shrink-0 self-end"
-                disabled={!username.trim() || !content.trim()}
+                disabled={!content.trim() || !user}
               >
                 <Send className="w-4 h-4" />
               </Button>

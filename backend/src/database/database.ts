@@ -1,5 +1,165 @@
 import { supabase } from '../config/supabase';
-import { User, Comment, UserReview, Discussion, DiscussionReply } from '../types';
+import { User, Comment, UserReview, Discussion, DiscussionReply, Movie, MoodInfo, Mood } from '../types';
+
+// Moods
+export const getMoods = async (): Promise<MoodInfo[]> => {
+  const { data, error } = await supabase
+    .from('moods')
+    .select('*')
+    .order('id');
+
+  if (error) {
+    console.error('Error fetching moods:', error);
+    return [];
+  }
+  return (data || []).map(m => ({
+    id: m.id as Mood,
+    name: m.name,
+    emoji: m.emoji,
+    description: m.description,
+  }));
+};
+
+export const getMoodById = async (id: string): Promise<MoodInfo | null> => {
+  const { data, error } = await supabase
+    .from('moods')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    console.error('Error fetching mood by id:', error);
+    return null;
+  }
+  return {
+    id: data.id as Mood,
+    name: data.name,
+    emoji: data.emoji,
+    description: data.description,
+  };
+};
+
+// Movies
+export const getMovies = async (): Promise<Movie[]> => {
+  const { data, error } = await supabase
+    .from('movies')
+    .select('*')
+    .order('title');
+
+  if (error) {
+    console.error('Error fetching movies:', error);
+    return [];
+  }
+  return (data || []).map(m => ({
+    id: m.id,
+    title: m.title,
+    posterUrl: m.poster_url,
+    rating: parseFloat(m.rating),
+    year: m.year,
+    duration: m.duration,
+    genres: m.genres || [],
+    mood: m.mood as Mood,
+    type: m.type as 'movie' | 'series',
+    language: m.language,
+    trailerUrl: m.trailer_url || undefined,
+  }));
+};
+
+export const getMovieById = async (id: string): Promise<Movie | null> => {
+  const { data, error } = await supabase
+    .from('movies')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    console.error('Error fetching movie by id:', error);
+    return null;
+  }
+  return {
+    id: data.id,
+    title: data.title,
+    posterUrl: data.poster_url,
+    rating: parseFloat(data.rating),
+    year: data.year,
+    duration: data.duration,
+    genres: data.genres || [],
+    mood: data.mood as Mood,
+    type: data.type as 'movie' | 'series',
+    language: data.language,
+    trailerUrl: data.trailer_url || undefined,
+  };
+};
+
+export const getMoviesByMood = async (mood: Mood): Promise<Movie[]> => {
+  const { data, error } = await supabase
+    .from('movies')
+    .select('*')
+    .eq('mood', mood)
+    .order('title');
+
+  if (error) {
+    console.error('Error fetching movies by mood:', error);
+    return [];
+  }
+  return (data || []).map(m => ({
+    id: m.id,
+    title: m.title,
+    posterUrl: m.poster_url,
+    rating: parseFloat(m.rating),
+    year: m.year,
+    duration: m.duration,
+    genres: m.genres || [],
+    mood: m.mood as Mood,
+    type: m.type as 'movie' | 'series',
+    language: m.language,
+    trailerUrl: m.trailer_url || undefined,
+  }));
+};
+
+export const getMoviesWithFilters = async (filters: {
+  mood?: Mood;
+  type?: 'movie' | 'series' | 'all';
+  language?: string;
+}): Promise<Movie[]> => {
+  let query = supabase.from('movies').select('*');
+
+  if (filters.mood) {
+    query = query.eq('mood', filters.mood);
+  }
+
+  if (filters.type && filters.type !== 'all') {
+    query = query.eq('type', filters.type);
+  }
+
+  if (filters.language && filters.language !== 'any') {
+    query = query.eq('language', filters.language);
+  }
+
+  query = query.order('title');
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching movies with filters:', error);
+    return [];
+  }
+  return (data || []).map(m => ({
+    id: m.id,
+    title: m.title,
+    posterUrl: m.poster_url,
+    rating: parseFloat(m.rating),
+    year: m.year,
+    duration: m.duration,
+    genres: m.genres || [],
+    mood: m.mood as Mood,
+    type: m.type as 'movie' | 'series',
+    language: m.language,
+    trailerUrl: m.trailer_url || undefined,
+  }));
+};
 
 // Users
 export const getUsers = async (): Promise<User[]> => {

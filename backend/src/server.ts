@@ -9,6 +9,7 @@ import reviewsRoutes from './routes/reviews';
 import discussionsRoutes from './routes/discussions';
 import favoritesRoutes from './routes/favorites';
 import watchLaterRoutes from './routes/watchLater';
+import aiRoutes from './routes/ai';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use('/api/reviews', reviewsRoutes);
 app.use('/api/discussions', discussionsRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/watch-later', watchLaterRoutes);
+app.use('/api/ai', aiRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

@@ -1,0 +1,32 @@
+Bilirik ki, bəzən nəyə baxacağınıza qərar vermək çox çətin ola bilər: saysız-hesabsız janrlar, sonsuz seçimlər və davamlı sual—
+
+“Bu gün nəyə baxım?”
+
+Burada biz köməyə gəlirik. FilmSEC Biz sizə ruh halınıza uyğun film və ya seriallar tövsiyə edirik. Xoşbəxt, kədərli, həyəcanlı, rahat, düşüncəli və ya romantik hiss edirsinizsə, sizin duyğularınıza uyğun tövsiyələrimiz var.
+
+Missiyamız
+
+Missiyamız sadədir: qararsızlığı kəşfə çevirmək. Hər istifadəçinin mood-u ilə uyğun film və seriallar tapmasını təmin etmək, gülmək, ağlamaq, düşünmək və ya rahatlamaq üçün ən uyğun təcrübəni yaratmaq.
+
+Necə İşləyir
+
+Mood seçimi: Bu gün necə hiss etdiyinizi seçin.
+
+Fərdi tövsiyələr: AI əsaslı sistemimiz mood və keçmiş baxış tarixçənizə əsaslanaraq film/serial tövsiyələri verir.
+
+Yeni favoritləri kəşf edin: Trailer-lərə baxın, qısa təsvirləri oxuyun və sevdiklərinizi favoritlərə əlavə edin.
+
+Texnologiyamız
+
+Sürətli, responsiv və maraqlı təcrübə təmin etmək üçün React, Tailwind CSS, Supabase və TMDB API istifadə edirik.
+AI əsaslı tövsiyə motorumuz hər tövsiyəni şəxsi və uyğun edir.
+
+Niyə Varıq
+
+FilmSEC layihəsinə inanırıq ki, nəyə baxacağınıza qərar vermək əyləncəli, asan və sizə uyğun olmalıdır. Məqsədimiz hər film gecəsini və ya binge-watching sessiyasını yaddaqalan və zövqlü etməkdir.
+
+Bizə Qoşulun
+
+Mood-unuzu seçin, kəşf edin və bu gün növbəti favorit filminizi tapın!
+
+“Çünki sizin mood-unuz ən uyğun filmi haqq edir.” 🎥❤️

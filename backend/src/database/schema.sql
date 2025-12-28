@@ -4,6 +4,29 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Moods table
+CREATE TABLE IF NOT EXISTS moods (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  emoji VARCHAR(10) NOT NULL,
+  description TEXT NOT NULL
+);
+
+-- Movies table
+CREATE TABLE IF NOT EXISTS movies (
+  id VARCHAR(255) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  poster_url TEXT NOT NULL,
+  rating DECIMAL(3,1) NOT NULL,
+  year INTEGER NOT NULL,
+  duration VARCHAR(50) NOT NULL,
+  genres TEXT[] NOT NULL,
+  mood VARCHAR(50) NOT NULL REFERENCES moods(id),
+  type VARCHAR(20) NOT NULL CHECK (type IN ('movie', 'series')),
+  language VARCHAR(10) NOT NULL,
+  trailer_url TEXT
+);
+
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -73,6 +96,9 @@ CREATE TABLE IF NOT EXISTS watch_later (
 );
 
 -- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_movies_mood ON movies(mood);
+CREATE INDEX IF NOT EXISTS idx_movies_type ON movies(type);
+CREATE INDEX IF NOT EXISTS idx_movies_language ON movies(language);
 CREATE INDEX IF NOT EXISTS idx_comments_movie_id ON comments(movie_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_movie_id ON reviews(movie_id);
 CREATE INDEX IF NOT EXISTS idx_discussions_mood ON discussions(mood);

@@ -1,35 +1,34 @@
 import { Router, Request, Response } from 'express';
-import { movies } from '../data/movies';
-import { Mood, Filters } from '../types';
+import { getMovies, getMovieById, getMoviesByMood, getMoviesWithFilters } from '../database/database';
+import { Mood } from '../types';
 
 const router = Router();
 
 // Get all movies
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
-    const { mood, type, duration, language } = req.query;
+    const { mood, type, language } = req.query;
 
-    let filteredMovies = [...movies];
+    const filters: {
+      mood?: Mood;
+      type?: 'movie' | 'series' | 'all';
+      language?: string;
+    } = {};
 
-    // Filter by mood
     if (mood && typeof mood === 'string') {
-      filteredMovies = filteredMovies.filter(m => m.mood === mood as Mood);
+      filters.mood = mood as Mood;
     }
 
-    // Filter by type
-    if (type && type !== 'all') {
-      filteredMovies = filteredMovies.filter(m => m.type === type);
+    if (type && typeof type === 'string') {
+      filters.type = type as 'movie' | 'series' | 'all';
     }
 
-    // Filter by language
-    if (language && language !== 'any') {
-      filteredMovies = filteredMovies.filter(m => m.language === language);
+    if (language && typeof language === 'string') {
+      filters.language = language;
     }
 
-    // Note: Duration filtering would require parsing the duration string
-    // This is a simplified version
-
-    res.json(filteredMovies);
+    const movies = await getMoviesWithFilters(filters);
+    res.json(movies);
   } catch (error) {
     console.error('Get movies error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -37,10 +36,10 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 // Get movie by ID
-router.get('/:id', (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const movie = movies.find(m => m.id === id);
+    const movie = await getMovieById(id);
 
     if (!movie) {
       return res.status(404).json({ error: 'Movie not found' });
@@ -54,10 +53,10 @@ router.get('/:id', (req: Request, res: Response) => {
 });
 
 // Get movies by mood
-router.get('/mood/:mood', (req: Request, res: Response) => {
+router.get('/mood/:mood', async (req: Request, res: Response) => {
   try {
     const { mood } = req.params;
-    const moodMovies = movies.filter(m => m.mood === mood as Mood);
+    const moodMovies = await getMoviesByMood(mood as Mood);
     res.json(moodMovies);
   } catch (error) {
     console.error('Get movies by mood error:', error);

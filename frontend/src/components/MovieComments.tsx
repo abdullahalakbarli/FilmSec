@@ -2,30 +2,64 @@ import { useState } from 'react';
 import { MessageCircle, ThumbsUp, Send, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Comment } from '@/types/movie';
 import { cn } from '@/lib/utils';
+import { useComments } from '@/hooks/useComments';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
 
 interface MovieCommentsProps {
   movieId: string;
-  comments: Comment[];
-  onAddComment: (movieId: string, username: string, content: string) => void;
-  onLikeComment: (commentId: string) => void;
 }
 
-const MovieComments = ({ movieId, comments, onAddComment, onLikeComment }: MovieCommentsProps) => {
+const MovieComments = ({ movieId }: MovieCommentsProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [username, setUsername] = useState('');
   const [content, setContent] = useState('');
+  const { user } = useAuth();
+  const { comments, addComment, likeComment, isLoading } = useComments(movieId);
 
-  const movieComments = comments.filter((c) => c.movieId === movieId);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim() && content.trim()) {
-      onAddComment(movieId, username.trim(), content.trim());
-      setContent('');
+    if (!user) {
+      toast({
+        title: 'Giriş tələb olunur',
+        description: 'Şərh yazmaq üçün giriş edin',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (content.trim()) {
+      const result = await addComment(content.trim());
+      if (result.error) {
+        toast({
+          title: 'Xəta',
+          description: result.error,
+          variant: 'destructive',
+        });
+      } else {
+        setContent('');
+      }
+    }
+  };
+
+  const handleLike = async (commentId: string) => {
+    if (!user) {
+      toast({
+        title: 'Giriş tələb olunur',
+        description: 'Bəyənmək üçün giriş edin',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const result = await likeComment(commentId);
+    if (result.error) {
+      toast({
+        title: 'Xəta',
+        description: result.error,
+        variant: 'destructive',
+      });
     }
   };
 
@@ -71,11 +105,11 @@ const MovieComments = ({ movieId, comments, onAddComment, onLikeComment }: Movie
                     </div>
                     <p className="text-sm text-foreground/80 mb-2">{comment.content}</p>
                     <button
-                      onClick={() => onLikeComment(comment.id)}
+                      onClick={() => handleLike(comment.id)}
                       className="flex items-center gap-1 text-xs text-muted-foreground hover:text-mood-romantic transition-colors"
                     >
                       <ThumbsUp className="w-3 h-3" />
-                      <span>{comment.likes}</span>
+                      <span>{comment.likes || 0}</span>
                     </button>
                   </div>
                 ))
@@ -84,24 +118,19 @@ const MovieComments = ({ movieId, comments, onAddComment, onLikeComment }: Movie
           </ScrollArea>
 
           <form onSubmit={handleSubmit} className="space-y-2">
-            <Input
-              placeholder="Adınız"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="text-sm h-9"
-            />
             <div className="flex gap-2">
               <Textarea
-                placeholder="Şərhinizi yazın..."
+                placeholder={user ? "Şərhinizi yazın..." : "Şərh yazmaq üçün giriş edin"}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="text-sm min-h-[60px] resize-none flex-1"
+                disabled={!user}
               />
               <Button
                 type="submit"
                 size="icon"
                 className="shrink-0 self-end"
-                disabled={!username.trim() || !content.trim()}
+                disabled={!content.trim() || !user || isLoading}
               >
                 <Send className="w-4 h-4" />
               </Button>

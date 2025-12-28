@@ -3,9 +3,10 @@ import { Bot, Send, X, Sparkles, Film, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { movies } from '@/data/movies';
-import { Movie, Mood } from '@/types/movie';
+import { Movie } from '@/types/movie';
 import { cn } from '@/lib/utils';
+import apiCall from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
   id: string;
@@ -20,159 +21,19 @@ interface AIChatAssistantProps {
   onMovieSelect?: (movie: Movie) => void;
 }
 
-// Mood keywords for NLP-like matching
-const moodKeywords: Record<Mood, string[]> = {
-  happy: ['xoşbəxt', 'şad', 'gülmək', 'komediya', 'əyləncəli', 'pozitiv', 'sevinc', 'happy', 'fun', 'comedy', 'laugh'],
-  sad: ['kədərli', 'ağlamaq', 'dram', 'emosional', 'hüznlü', 'sad', 'cry', 'emotional', 'drama', 'touching'],
-  excited: ['həyəcanlı', 'aksiya', 'triller', 'sürətli', 'macəra', 'excited', 'action', 'thriller', 'adventure', 'intense'],
-  relax: ['rahat', 'sakit', 'istirahət', 'yüngül', 'relax', 'calm', 'peaceful', 'chill', 'easy'],
-  thoughtful: ['düşüncəli', 'fəlsəfi', 'dərin', 'beyin', 'mürəkkəb', 'thoughtful', 'deep', 'philosophical', 'mind', 'complex'],
-  romantic: ['romantik', 'sevgi', 'eşq', 'münasibət', 'romantic', 'love', 'relationship', 'couple']
-};
-
-// AI response templates
-const greetings = [
-  "Salam! 🎬 Mən sizin film köməkçinizəm. Bu gün hansı əhval-ruhiyyədəsiniz?",
-  "Xoş gəlmisiniz! 🍿 Film seçməkdə sizə kömək edə bilərəm. Nə izləmək istərdiniz?",
-];
-
-const moodResponses: Record<Mood, string[]> = {
-  happy: [
-    "Əla! Şən əhval-ruhiyyə üçün gözəl seçimlərim var! 🌟",
-    "Gülmək istəyirsiniz? Sizə mükəmməl komediyalar təklif edirəm! 😄",
-  ],
-  sad: [
-    "Emosional bir gecə üçün dərin hisslər oyadan filmlər təklif edirəm. 💙",
-    "Bəzən yaxşı bir dram ruha xeyir verir. İşte tövsiyələrim:",
-  ],
-  excited: [
-    "Adrenalin istəyirsiniz? Həyəcanlı filmlər hazırdır! 🔥",
-    "Aksiya və macəra? Gəlin! 💥",
-  ],
-  relax: [
-    "Rahat bir axşam üçün sakit filmlər seçdim. 🌿",
-    "İstirahət vaxtı! Yüngül və xoş filmlər burada:",
-  ],
-  thoughtful: [
-    "Düşüncəli bir axşam üçün beyin açan filmlər! 🧠",
-    "Dərin mənalı filmlər axtarırsınız? Baxın bunlara:",
-  ],
-  romantic: [
-    "Romantik bir gecə üçün ən yaxşı seçimlər! 💕",
-    "Eşq hekayələri? Sizin üçün xüsusi filmlər var! ❤️",
-  ],
-};
-
-function detectMood(text: string): Mood | null {
-  const lowerText = text.toLowerCase();
-  
-  for (const [mood, keywords] of Object.entries(moodKeywords)) {
-    if (keywords.some(keyword => lowerText.includes(keyword))) {
-      return mood as Mood;
-    }
-  }
-  return null;
+interface AIResponse {
+  content: string;
+  recommendations?: Array<{
+    id: string;
+    title: string;
+    posterUrl: string;
+    rating: number;
+    year: number;
+    mood: string;
+  }>;
 }
 
-function getRecommendations(
-  mood: Mood | null, 
-  favorites: string[], 
-  watchLater: string[],
-  count: number = 3
-): Movie[] {
-  let candidates = mood 
-    ? movies.filter(m => m.mood === mood)
-    : movies;
-  
-  // Prioritize unwatched movies
-  candidates = candidates.sort((a, b) => {
-    const aInList = favorites.includes(a.id) || watchLater.includes(a.id);
-    const bInList = favorites.includes(b.id) || watchLater.includes(b.id);
-    if (aInList && !bInList) return 1;
-    if (!aInList && bInList) return -1;
-    return b.rating - a.rating;
-  });
-  
-  return candidates.slice(0, count);
-}
-
-function generateWhyText(movie: Movie): string {
-  const reasons: Record<Mood, string[]> = {
-    happy: [
-      `${movie.title} sizə gülüş və pozitiv enerji bəxş edəcək.`,
-      `Bu film xoş əhval-ruhiyyənizi daha da yaxşılaşdıracaq!`,
-    ],
-    sad: [
-      `${movie.title} dərin emosiyalar yaşamaq istəyənlər üçün mükəmməldir.`,
-      `Bu dram sizin hisslərinizi anlamağa kömək edəcək.`,
-    ],
-    excited: [
-      `${movie.title} sizi ekrana yapışdıracaq həyəcanlı səhnələrlə doludur!`,
-      `Adrenalin sevənlər üçün ideal seçim!`,
-    ],
-    relax: [
-      `${movie.title} sakit bir axşam üçün mükəmməl seçimdir.`,
-      `Rahatlamaq istəyirsinizsə, bu film tam sizlik!`,
-    ],
-    thoughtful: [
-      `${movie.title} sizi düşündürəcək və uzun müddət ağlınızda qalacaq.`,
-      `Dərin mənalı hekayə axtarırsınızsa, bu sizin üçün!`,
-    ],
-    romantic: [
-      `${movie.title} ürəyinizi fəth edəcək gözəl bir sevgi hekayəsi.`,
-      `Romantik bir gecə üçün ideal film!`,
-    ],
-  };
-  
-  const moodReasons = reasons[movie.mood];
-  return moodReasons[Math.floor(Math.random() * moodReasons.length)];
-}
-
-function generateResponse(
-  userMessage: string, 
-  favorites: string[], 
-  watchLater: string[]
-): { content: string; recommendations?: Movie[] } {
-  const lowerMessage = userMessage.toLowerCase();
-  
-  // Greeting detection
-  if (lowerMessage.match(/(salam|hello|hi|hey|merhaba)/)) {
-    return { 
-      content: greetings[Math.floor(Math.random() * greetings.length)]
-    };
-  }
-  
-  // "What should I watch" type questions
-  if (lowerMessage.match(/(nə baxım|ne baxim|nə izləyim|film tövsiyə|recommend|suggest|watch)/)) {
-    const detectedMood = detectMood(userMessage);
-    
-    if (detectedMood) {
-      const recommendations = getRecommendations(detectedMood, favorites, watchLater);
-      const response = moodResponses[detectedMood][Math.floor(Math.random() * moodResponses[detectedMood].length)];
-      return { content: response, recommendations };
-    }
-    
-    // Random recommendations
-    const randomMovies = getRecommendations(null, favorites, watchLater);
-    return {
-      content: "Budur sizin üçün seçdiyim maraqlı filmlər! Hansı əhval-ruhiyyədə olduğunuzu desəniz, daha dəqiq tövsiyələr verə bilərəm. 🎬",
-      recommendations: randomMovies
-    };
-  }
-  
-  // Mood-specific requests
-  const detectedMood = detectMood(userMessage);
-  if (detectedMood) {
-    const recommendations = getRecommendations(detectedMood, favorites, watchLater);
-    const response = moodResponses[detectedMood][Math.floor(Math.random() * moodResponses[detectedMood].length)];
-    return { content: response, recommendations };
-  }
-  
-  // Default response
-  return {
-    content: "Mən sizə film tövsiyələri verə bilərəm! Sadəcə deyin: 'Bu gün nə baxım?' və ya əhval-ruhiyyənizi təsvir edin. Məsələn: 'Həyəcanlı bir şey istəyirəm' və ya 'Romantik film'. 🎬"
-  };
-}
+const initialGreeting = "Salam! Bu gün nə izləmək istəyirsiniz? Əhval-ruhiyyənizə görə mükəmməl film tapmağınıza kömək edə bilərəm! 🎬";
 
 const AIChatAssistant = ({ favorites, watchLater, onMovieSelect }: AIChatAssistantProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -181,6 +42,7 @@ const AIChatAssistant = ({ favorites, watchLater, onMovieSelect }: AIChatAssista
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
   
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -189,7 +51,7 @@ const AIChatAssistant = ({ favorites, watchLater, onMovieSelect }: AIChatAssista
         setMessages([{
           id: '1',
           role: 'assistant',
-          content: greetings[Math.floor(Math.random() * greetings.length)]
+          content: initialGreeting
         }]);
       }, 500);
     }
@@ -207,8 +69,19 @@ const AIChatAssistant = ({ favorites, watchLater, onMovieSelect }: AIChatAssista
     }
   }, [isOpen]);
   
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
+    
+    if (!user) {
+      // Show message that user needs to login
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: "Please log in to use the AI assistant. I can help you find movies based on your preferences! 🔐"
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      return;
+    }
     
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -217,21 +90,55 @@ const AIChatAssistant = ({ favorites, watchLater, onMovieSelect }: AIChatAssista
     };
     
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input.trim();
     setInput('');
     setIsTyping(true);
     
-    // Simulate AI thinking
-    setTimeout(() => {
-      const response = generateResponse(input.trim(), favorites, watchLater);
-      const assistantMessage: Message = {
+    try {
+      // Call backend AI API
+      const response = await apiCall<AIResponse>('/ai/chat', {
+        method: 'POST',
+        body: JSON.stringify({ message: currentInput }),
+      });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      if (response.data) {
+        // Convert recommendations to Movie format
+        const recommendations: Movie[] | undefined = response.data.recommendations?.map(rec => ({
+          id: rec.id,
+          title: rec.title,
+          posterUrl: rec.posterUrl,
+          rating: rec.rating,
+          year: rec.year,
+          duration: '',
+          genres: [],
+          mood: rec.mood as any,
+          type: 'movie' as const,
+          language: 'az',
+        }));
+
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: response.data.content,
+          recommendations
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      }
+    } catch (error) {
+      console.error('AI chat error:', error);
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.content,
-        recommendations: response.recommendations
+        content: "Sorry, I'm having trouble right now. Please try again later! 😔"
       };
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 800 + Math.random() * 500);
+    }
   };
   
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -326,10 +233,7 @@ const AIChatAssistant = ({ favorites, watchLater, onMovieSelect }: AIChatAssista
                               {movie.title}
                             </h4>
                             <p className="text-xs text-muted-foreground">
-                              ⭐ {movie.rating} • {movie.year}
-                            </p>
-                            <p className="text-xs text-primary mt-1">
-                              {generateWhyText(movie)}
+                              ⭐ {movie.rating} • {movie.year} • {movie.mood}
                             </p>
                           </div>
                         </div>

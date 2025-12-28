@@ -13,8 +13,11 @@ import AIChatAssistant from '@/components/AIChatAssistant';
 import { Button } from '@/components/ui/button';
 import { moods } from '@/data/moods';
 import { movies } from '@/data/movies';
-import { Mood, Filters, Movie, Comment, UserReview } from '@/types/movie';
+import { Mood, Filters, Movie, UserReview } from '@/types/movie';
 import { cn } from '@/lib/utils';
+import { useFavorites } from '@/hooks/useFavorites';
+import { useWatchLater } from '@/hooks/useWatchLater';
+import { toast } from '@/hooks/use-toast';
 
 const defaultFilters: Filters = {
   type: 'all',
@@ -24,43 +27,20 @@ const defaultFilters: Filters = {
 
 const Index = () => {
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [watchLater, setWatchLater] = useState<string[]>([]);
+  const { favorites, toggleFavorite } = useFavorites();
+  const { watchLater, toggleWatchLater } = useWatchLater();
   const [showFavorites, setShowFavorites] = useState(false);
   const [showWatchLater, setShowWatchLater] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [isLoading, setIsLoading] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
   const [reviews, setReviews] = useState<UserReview[]>([]);
 
-  // Load data from localStorage
+  // Load reviews from localStorage (can be migrated to API later)
   useEffect(() => {
-    const savedFavorites = localStorage.getItem('favorites');
-    if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
-
-    const savedWatchLater = localStorage.getItem('watchLater');
-    if (savedWatchLater) setWatchLater(JSON.parse(savedWatchLater));
-
-    const savedComments = localStorage.getItem('comments');
-    if (savedComments) setComments(JSON.parse(savedComments));
-
     const savedReviews = localStorage.getItem('reviews');
     if (savedReviews) setReviews(JSON.parse(savedReviews));
   }, []);
-
-  // Save data to localStorage
-  useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-  }, [favorites]);
-
-  useEffect(() => {
-    localStorage.setItem('watchLater', JSON.stringify(watchLater));
-  }, [watchLater]);
-
-  useEffect(() => {
-    localStorage.setItem('comments', JSON.stringify(comments));
-  }, [comments]);
 
   useEffect(() => {
     localStorage.setItem('reviews', JSON.stringify(reviews));
@@ -101,41 +81,28 @@ const Index = () => {
     setTimeout(() => setIsLoading(false), 300);
   };
 
-  const toggleFavorite = (movieId: string) => {
-    setFavorites((prev) =>
-      prev.includes(movieId)
-        ? prev.filter((id) => id !== movieId)
-        : [...prev, movieId]
-    );
+  const handleToggleFavorite = async (movieId: string) => {
+    const result = await toggleFavorite(movieId);
+    if (result.error) {
+      toast({
+        title: 'Xəta',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
   };
 
-  const toggleWatchLater = (movieId: string) => {
-    setWatchLater((prev) =>
-      prev.includes(movieId)
-        ? prev.filter((id) => id !== movieId)
-        : [...prev, movieId]
-    );
+  const handleToggleWatchLater = async (movieId: string) => {
+    const result = await toggleWatchLater(movieId);
+    if (result.error) {
+      toast({
+        title: 'Xəta',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleAddComment = (movieId: string, username: string, content: string) => {
-    const newComment: Comment = {
-      id: Date.now().toString(),
-      movieId,
-      username,
-      content,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-    };
-    setComments((prev) => [...prev, newComment]);
-  };
-
-  const handleLikeComment = (commentId: string) => {
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId ? { ...c, likes: c.likes + 1 } : c
-      )
-    );
-  };
 
   const handleAddReview = (movieId: string, username: string, rating: number, review: string) => {
     const newReview: UserReview = {
@@ -264,13 +231,10 @@ const Index = () => {
                         movie={movie}
                         isFavorite={favorites.includes(movie.id)}
                         isInWatchLater={watchLater.includes(movie.id)}
-                        onToggleFavorite={() => toggleFavorite(movie.id)}
-                        onToggleWatchLater={() => toggleWatchLater(movie.id)}
+                        onToggleFavorite={() => handleToggleFavorite(movie.id)}
+                        onToggleWatchLater={() => handleToggleWatchLater(movie.id)}
                         index={index}
-                        comments={comments}
                         reviews={reviews}
-                        onAddComment={handleAddComment}
-                        onLikeComment={handleLikeComment}
                         onAddReview={handleAddReview}
                       />
                     ))}
@@ -298,14 +262,14 @@ const Index = () => {
         isOpen={showFavorites}
         onClose={() => setShowFavorites(false)}
         favorites={favoriteMovies}
-        onRemoveFavorite={toggleFavorite}
+        onRemoveFavorite={handleToggleFavorite}
       />
 
       <WatchLaterDrawer
         isOpen={showWatchLater}
         onClose={() => setShowWatchLater(false)}
         watchLater={watchLaterMovies}
-        onRemoveFromWatchLater={toggleWatchLater}
+        onRemoveFromWatchLater={handleToggleWatchLater}
       />
 
       <AIChatAssistant 

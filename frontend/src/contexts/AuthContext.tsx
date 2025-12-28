@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import apiCall from '@/lib/api';
 
 interface User {
   id: string;
@@ -34,72 +35,71 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load user from localStorage on mount
-    const savedUser = localStorage.getItem('mock_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    // Load user from token on mount
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      // Verify token and get user
+      apiCall<{ user: User }>('/auth/me')
+        .then((response) => {
+          if (response.data?.user) {
+            setUser(response.data.user);
+          } else {
+            // Invalid token, remove it
+            localStorage.removeItem('auth_token');
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('auth_token');
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const signIn = async (email: string, password: string): Promise<{ error?: string }> => {
-    // Mock sign in - check if user exists in localStorage
-    const users = JSON.parse(localStorage.getItem('mock_users') || '[]');
-    const existingUser = users.find((u: any) => u.email === email);
-    
-    if (!existingUser) {
-      return { error: 'İstifadəçi tapılmadı' };
-    }
-    
-    if (existingUser.password !== password) {
-      return { error: 'Şifrə yanlışdır' };
+    const response = await apiCall<{ token: string; user: User }>('/auth/signin', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (response.error) {
+      return { error: response.error };
     }
 
-    const userData: User = {
-      id: existingUser.id,
-      email: existingUser.email,
-      name: existingUser.name,
-      avatar: existingUser.avatar
-    };
+    if (response.data?.token && response.data?.user) {
+      localStorage.setItem('auth_token', response.data.token);
+      setUser(response.data.user);
+      return {};
+    }
 
-    setUser(userData);
-    localStorage.setItem('mock_user', JSON.stringify(userData));
-    return {};
+    return { error: 'Giriş zamanı xəta baş verdi' };
   };
 
   const signUp = async (email: string, password: string, name: string): Promise<{ error?: string }> => {
-    // Mock sign up - save to localStorage
-    const users = JSON.parse(localStorage.getItem('mock_users') || '[]');
-    
-    if (users.find((u: any) => u.email === email)) {
-      return { error: 'Bu email artıq qeydiyyatdan keçib' };
+    const response = await apiCall<{ token: string; user: User }>('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name }),
+    });
+
+    if (response.error) {
+      return { error: response.error };
     }
 
-    const newUser = {
-      id: crypto.randomUUID(),
-      email,
-      password,
-      name,
-      avatar: undefined
-    };
+    if (response.data?.token && response.data?.user) {
+      localStorage.setItem('auth_token', response.data.token);
+      setUser(response.data.user);
+      return {};
+    }
 
-    users.push(newUser);
-    localStorage.setItem('mock_users', JSON.stringify(users));
-
-    const userData: User = {
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name
-    };
-
-    setUser(userData);
-    localStorage.setItem('mock_user', JSON.stringify(userData));
-    return {};
+    return { error: 'Qeydiyyat zamanı xəta baş verdi' };
   };
 
   const signOut = () => {
     setUser(null);
-    localStorage.removeItem('mock_user');
+    localStorage.removeItem('auth_token');
   };
 
   return (

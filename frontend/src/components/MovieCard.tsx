@@ -17,8 +17,6 @@ interface MovieCardProps {
   index: number;
   comments: Comment[];
   reviews: UserReview[];
-  onAddComment: (movieId: string, username: string, content: string) => void;
-  onLikeComment: (commentId: string) => void;
   onAddReview: (movieId: string, username: string, rating: number, review: string) => void;
 }
 
@@ -38,10 +36,7 @@ const MovieCard = ({
   onToggleFavorite, 
   onToggleWatchLater, 
   index,
-  comments,
   reviews,
-  onAddComment,
-  onLikeComment,
   onAddReview
 }: MovieCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -197,12 +192,7 @@ const MovieCard = ({
         </div>
 
         {/* Comments & Reviews */}
-        <MovieComments
-          movieId={movie.id}
-          comments={comments}
-          onAddComment={onAddComment}
-          onLikeComment={onLikeComment}
-        />
+        <MovieComments movieId={movie.id} />
         <UserRating
           movieId={movie.id}
           reviews={reviews}

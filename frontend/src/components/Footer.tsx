@@ -1,4 +1,5 @@
 import { Film, Github, Mail, Info } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -10,20 +11,20 @@ const Footer = () => {
             <div className="w-8 h-8 rounded-lg bg-mood-happy flex items-center justify-center">
               <Film className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold">Bu Gün Nə Baxım?</span>
+            <span className="font-semibold">FilmSEC</span>
           </div>
 
           {/* Links */}
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+            <Link to="/about" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
               <Info className="w-4 h-4" />
               Haqqımızda
-            </a>
-            <a href="#" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+            </Link>
+            <a href="mailto:abdullahalakbarli077@gmail.com" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
               <Mail className="w-4 h-4" />
               Əlaqə
             </a>
-            <a href="#" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+            <a href="https://github.com/abdullahalakbarli" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
               <Github className="w-4 h-4" />
               GitHub
             </a>

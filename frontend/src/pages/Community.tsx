@@ -9,10 +9,14 @@ import DiscussionCard from '@/components/DiscussionCard';
 import CreateDiscussion from '@/components/CreateDiscussion';
 import FavoritesDrawer from '@/components/FavoritesDrawer';
 import WatchLaterDrawer from '@/components/WatchLaterDrawer';
-import { Discussion, Mood, DiscussionReply } from '@/types/movie';
+import { Mood } from '@/types/movie';
 import { moods } from '@/data/moods';
 import { movies } from '@/data/movies';
 import { cn } from '@/lib/utils';
+import { useFavorites } from '@/hooks/useFavorites';
+import { useWatchLater } from '@/hooks/useWatchLater';
+import { useDiscussions } from '@/hooks/useDiscussions';
+import { toast } from '@/hooks/use-toast';
 
 const moodColors: Record<Mood, string> = {
   happy: 'bg-mood-happy/20 text-mood-happy border-mood-happy/30 hover:bg-mood-happy/30',
@@ -23,153 +27,74 @@ const moodColors: Record<Mood, string> = {
   romantic: 'bg-mood-romantic/20 text-mood-romantic border-mood-romantic/30 hover:bg-mood-romantic/30',
 };
 
-const defaultDiscussions: Discussion[] = [
-  {
-    id: '1',
-    mood: 'happy',
-    title: 'Hansı film sizi ən çox güldürdü?',
-    description: 'Komediya janrında ən yaddaqalan filmlərinizi paylaşın!',
-    username: 'FilmSevər',
-    createdAt: new Date().toISOString(),
-    replies: [
-      {
-        id: '1-1',
-        username: 'Aynur',
-        content: 'The Hangover seriyası məni hər dəfə güldürür!',
-        createdAt: new Date().toISOString(),
-        likes: 5,
-      },
-    ],
-  },
-  {
-    id: '2',
-    mood: 'romantic',
-    title: 'Ən romantik film səhnəsi?',
-    description: 'Ürəyinizi əritmış film səhnələrindən danışaq',
-    username: 'RomantikRuh',
-    createdAt: new Date().toISOString(),
-    replies: [],
-  },
-  {
-    id: '3',
-    mood: 'thoughtful',
-    title: 'Düşündürücü finalları olan filmlər',
-    description: 'Sonuna qədər anlamadığınız və ya çox düşündürən finallar',
-    username: 'Filosof',
-    createdAt: new Date().toISOString(),
-    replies: [
-      {
-        id: '3-1',
-        username: 'Murad',
-        content: 'Inception-un finalı hələ də yadımdadır!',
-        createdAt: new Date().toISOString(),
-        likes: 8,
-      },
-    ],
-  },
-];
+// Discussions are now loaded from API via useDiscussions hook
 
 const Community = () => {
   const navigate = useNavigate();
-  const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [selectedMood, setSelectedMood] = useState<Mood | 'all'>('all');
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [watchLater, setWatchLater] = useState<string[]>([]);
+  const { favorites, toggleFavorite } = useFavorites();
+  const { watchLater, toggleWatchLater } = useWatchLater();
+  const { discussions, createDiscussion, addReply, likeReply, isLoading: discussionsLoading } = useDiscussions(selectedMood);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showWatchLater, setShowWatchLater] = useState(false);
 
-  // Load data from localStorage
-  useEffect(() => {
-    const savedDiscussions = localStorage.getItem('discussions');
-    if (savedDiscussions) {
-      setDiscussions(JSON.parse(savedDiscussions));
-    } else {
-      setDiscussions(defaultDiscussions);
-      localStorage.setItem('discussions', JSON.stringify(defaultDiscussions));
+  const handleCreateDiscussion = async (mood: Mood, title: string, description: string) => {
+    const result = await createDiscussion(mood, title, description);
+    if (result.error) {
+      toast({
+        title: 'Xəta',
+        description: result.error,
+        variant: 'destructive',
+      });
     }
+  };
 
-    const savedFavorites = localStorage.getItem('favorites');
-    if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
-
-    const savedWatchLater = localStorage.getItem('watchLater');
-    if (savedWatchLater) setWatchLater(JSON.parse(savedWatchLater));
-  }, []);
-
-  // Save discussions to localStorage
-  useEffect(() => {
-    if (discussions.length > 0) {
-      localStorage.setItem('discussions', JSON.stringify(discussions));
+  const handleAddReply = async (discussionId: string, content: string) => {
+    const result = await addReply(discussionId, content);
+    if (result && result.error) {
+      toast({
+        title: 'Xəta',
+        description: result.error,
+        variant: 'destructive',
+      });
     }
-  }, [discussions]);
-
-  const handleCreateDiscussion = (mood: Mood, title: string, description: string, username: string) => {
-    const newDiscussion: Discussion = {
-      id: Date.now().toString(),
-      mood,
-      title,
-      description,
-      username,
-      createdAt: new Date().toISOString(),
-      replies: [],
-    };
-    setDiscussions((prev) => [newDiscussion, ...prev]);
   };
 
-  const handleAddReply = (discussionId: string, username: string, content: string) => {
-    const newReply: DiscussionReply = {
-      id: Date.now().toString(),
-      username,
-      content,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-    };
-    setDiscussions((prev) =>
-      prev.map((d) =>
-        d.id === discussionId
-          ? { ...d, replies: [...d.replies, newReply] }
-          : d
-      )
-    );
+  const handleLikeReply = async (discussionId: string, replyId: string) => {
+    const result = await likeReply(discussionId, replyId);
+    if (result.error) {
+      toast({
+        title: 'Xəta',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleLikeReply = (discussionId: string, replyId: string) => {
-    setDiscussions((prev) =>
-      prev.map((d) =>
-        d.id === discussionId
-          ? {
-              ...d,
-              replies: d.replies.map((r) =>
-                r.id === replyId ? { ...r, likes: r.likes + 1 } : r
-              ),
-            }
-          : d
-      )
-    );
+  const handleToggleFavorite = async (movieId: string) => {
+    const result = await toggleFavorite(movieId);
+    if (result.error) {
+      toast({
+        title: 'Xəta',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
   };
 
-  const toggleFavorite = (movieId: string) => {
-    setFavorites((prev) => {
-      const newFavorites = prev.includes(movieId)
-        ? prev.filter((id) => id !== movieId)
-        : [...prev, movieId];
-      localStorage.setItem('favorites', JSON.stringify(newFavorites));
-      return newFavorites;
-    });
+  const handleToggleWatchLater = async (movieId: string) => {
+    const result = await toggleWatchLater(movieId);
+    if (result.error) {
+      toast({
+        title: 'Xəta',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
   };
 
-  const toggleWatchLater = (movieId: string) => {
-    setWatchLater((prev) => {
-      const newWatchLater = prev.includes(movieId)
-        ? prev.filter((id) => id !== movieId)
-        : [...prev, movieId];
-      localStorage.setItem('watchLater', JSON.stringify(newWatchLater));
-      return newWatchLater;
-    });
-  };
-
-  const filteredDiscussions = selectedMood === 'all'
-    ? discussions
-    : discussions.filter((d) => d.mood === selectedMood);
+  // Discussions are already filtered by mood in the API call
+  const filteredDiscussions = discussions;
 
   const favoriteMovies = movies.filter((m) => favorites.includes(m.id));
   const watchLaterMovies = movies.filter((m) => watchLater.includes(m.id));
@@ -252,7 +177,11 @@ const Community = () => {
 
           {/* Discussions */}
           <div className="space-y-4">
-            {filteredDiscussions.length === 0 ? (
+            {discussionsLoading ? (
+              <div className="text-center py-16">
+                <p className="text-muted-foreground">Yüklənir...</p>
+              </div>
+            ) : filteredDiscussions.length === 0 ? (
               <div className="text-center py-16">
                 <MessageSquare className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Müzakirə yoxdur</h3>
@@ -280,14 +209,14 @@ const Community = () => {
         isOpen={showFavorites}
         onClose={() => setShowFavorites(false)}
         favorites={favoriteMovies}
-        onRemoveFavorite={toggleFavorite}
+        onRemoveFavorite={handleToggleFavorite}
       />
 
       <WatchLaterDrawer
         isOpen={showWatchLater}
         onClose={() => setShowWatchLater(false)}
         watchLater={watchLaterMovies}
-        onRemoveFromWatchLater={toggleWatchLater}
+        onRemoveFromWatchLater={handleToggleWatchLater}
       />
     </div>
   );

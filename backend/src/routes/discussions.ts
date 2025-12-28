@@ -87,8 +87,27 @@ router.post('/:id/replies', authenticateToken, async (req: AuthRequest, res: Res
     const { id } = req.params;
     const { content } = req.body;
 
+    console.log('Add reply request:', { 
+      id, 
+      content, 
+      contentType: typeof content,
+      contentLength: content?.length,
+      body: req.body,
+      bodyKeys: Object.keys(req.body || {})
+    });
+
+    // Check if content exists and is a valid string
     if (!content) {
-      return res.status(400).json({ error: 'Content is required' });
+      return res.status(400).json({ error: 'Content field is missing in request body' });
+    }
+
+    if (typeof content !== 'string') {
+      return res.status(400).json({ error: `Content must be a string, got ${typeof content}` });
+    }
+
+    const trimmedContent = content.trim();
+    if (trimmedContent.length === 0) {
+      return res.status(400).json({ error: 'Content cannot be empty or only whitespace' });
     }
 
     if (!req.user) {
@@ -103,7 +122,7 @@ router.post('/:id/replies', authenticateToken, async (req: AuthRequest, res: Res
     const newReply = await addDiscussionReply(id, {
       id: uuidv4(),
       username: req.user.name,
-      content,
+      content: trimmedContent,
       createdAt: new Date().toISOString(),
       likes: 0,
     });
