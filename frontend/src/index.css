@@ -1,0 +1,222 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 8%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 8%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 47 100% 50%;
+    --primary-foreground: 240 10% 4%;
+
+    --secondary: 240 10% 15%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 10% 15%;
+    --muted-foreground: 240 5% 65%;
+
+    --accent: 280 80% 60%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 10% 20%;
+    --input: 240 10% 20%;
+    --ring: 47 100% 50%;
+
+    --radius: 1rem;
+
+    /* Mood Colors */
+    --mood-happy: 45 100% 60%;
+    --mood-happy-glow: 45 100% 70%;
+    --mood-sad: 210 80% 55%;
+    --mood-sad-glow: 210 80% 65%;
+    --mood-excited: 10 90% 55%;
+    --mood-excited-glow: 10 90% 65%;
+    --mood-relax: 160 60% 45%;
+    --mood-relax-glow: 160 60% 55%;
+    --mood-thoughtful: 270 70% 55%;
+    --mood-thoughtful-glow: 270 70% 65%;
+    --mood-romantic: 340 80% 60%;
+    --mood-romantic-glow: 340 80% 70%;
+
+    /* Gradients */
+    --gradient-happy: linear-gradient(135deg, hsl(45, 100%, 60%) 0%, hsl(35, 100%, 50%) 100%);
+    --gradient-sad: linear-gradient(135deg, hsl(210, 80%, 55%) 0%, hsl(220, 70%, 45%) 100%);
+    --gradient-excited: linear-gradient(135deg, hsl(10, 90%, 55%) 0%, hsl(0, 80%, 50%) 100%);
+    --gradient-relax: linear-gradient(135deg, hsl(160, 60%, 45%) 0%, hsl(140, 50%, 40%) 100%);
+    --gradient-thoughtful: linear-gradient(135deg, hsl(270, 70%, 55%) 0%, hsl(250, 60%, 45%) 100%);
+    --gradient-romantic: linear-gradient(135deg, hsl(340, 80%, 60%) 0%, hsl(350, 70%, 50%) 100%);
+
+    /* Animation tokens */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 240 10% 8%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 47 100% 50%;
+    --sidebar-primary-foreground: 240 10% 4%;
+    --sidebar-accent: 240 10% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 10% 20%;
+    --sidebar-ring: 47 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-outfit antialiased;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  /* Mood background utilities */
+  .bg-mood-happy {
+    background: var(--gradient-happy);
+  }
+  .bg-mood-sad {
+    background: var(--gradient-sad);
+  }
+  .bg-mood-excited {
+    background: var(--gradient-excited);
+  }
+  .bg-mood-relax {
+    background: var(--gradient-relax);
+  }
+  .bg-mood-thoughtful {
+    background: var(--gradient-thoughtful);
+  }
+  .bg-mood-romantic {
+    background: var(--gradient-romantic);
+  }
+
+  /* Glow effects */
+  .glow-happy {
+    box-shadow: 0 0 40px hsl(var(--mood-happy) / 0.4), 0 0 80px hsl(var(--mood-happy) / 0.2);
+  }
+  .glow-sad {
+    box-shadow: 0 0 40px hsl(var(--mood-sad) / 0.4), 0 0 80px hsl(var(--mood-sad) / 0.2);
+  }
+  .glow-excited {
+    box-shadow: 0 0 40px hsl(var(--mood-excited) / 0.4), 0 0 80px hsl(var(--mood-excited) / 0.2);
+  }
+  .glow-relax {
+    box-shadow: 0 0 40px hsl(var(--mood-relax) / 0.4), 0 0 80px hsl(var(--mood-relax) / 0.2);
+  }
+  .glow-thoughtful {
+    box-shadow: 0 0 40px hsl(var(--mood-thoughtful) / 0.4), 0 0 80px hsl(var(--mood-thoughtful) / 0.2);
+  }
+  .glow-romantic {
+    box-shadow: 0 0 40px hsl(var(--mood-romantic) / 0.4), 0 0 80px hsl(var(--mood-romantic) / 0.2);
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+  .card-hover:hover {
+    @apply -translate-y-2 scale-[1.02];
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+  }
+
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary;
+  }
+
+  /* Skeleton animation */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted-foreground) / 0.1) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Fade animations */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Stagger delay utilities */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+  .delay-600 { animation-delay: 600ms; }
+}
