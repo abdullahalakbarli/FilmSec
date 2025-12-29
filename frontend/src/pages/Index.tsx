@@ -155,7 +155,19 @@ const Index = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Don't scroll to top - let user stay where they are
+    // Scroll to top of movies section when page changes
+    setTimeout(() => {
+      const moviesSection = document.getElementById('movies-section');
+      if (moviesSection) {
+        const headerOffset = 80;
+        const elementPosition = moviesSection.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
   };
 
   const handleToggleFavorite = async (movieId: string) => {

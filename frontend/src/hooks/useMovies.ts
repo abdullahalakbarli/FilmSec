@@ -24,6 +24,11 @@ export function useMovies(
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Update internal currentPage when page prop changes
+  useEffect(() => {
+    setCurrentPage(page);
+  }, [page]);
+
   useEffect(() => {
     loadMovies(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
