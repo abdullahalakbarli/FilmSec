@@ -36,11 +36,30 @@ const Index = () => {
   const [reviews, setReviews] = useState<UserReview[]>([]);
 
   // Fetch movies from API based on selected mood and filters
-  const { movies: allMovies, isLoading: moviesLoading, refreshMovies } = useMovies({
-    mood: selectedMood || undefined,
-    type: filters.type,
-    language: filters.language,
-  });
+  const { movies: filteredMovies, isLoading: moviesLoading, refreshMovies } = useMovies(
+    selectedMood
+      ? {
+          mood: selectedMood,
+          type: filters.type,
+          language: filters.language,
+        }
+      : undefined
+  );
+
+  // Fetch all movies for favorites and watch later lists (only when drawers are open)
+  const [allMovies, setAllMovies] = useState<Movie[]>([]);
+  useEffect(() => {
+    if (showFavorites || showWatchLater) {
+      // Fetch all movies when drawers are opened
+      const fetchAllMovies = async () => {
+        const response = await apiCall<Movie[]>('/movies');
+        if (response.data) {
+          setAllMovies(response.data);
+        }
+      };
+      fetchAllMovies();
+    }
+  }, [showFavorites, showWatchLater]);
 
   // Load reviews from localStorage (can be migrated to API later)
   useEffect(() => {
@@ -52,21 +71,13 @@ const Index = () => {
     localStorage.setItem('reviews', JSON.stringify(reviews));
   }, [reviews]);
 
-  // Movies are already filtered by the API, so we just use them directly
-  const filteredMovies = useMemo(() => {
-    if (!selectedMood) return [];
-    return allMovies;
-  }, [selectedMood, allMovies]);
-
-  // For favorites and watch later, we need to fetch all movies to find matches
-  const { movies: allMoviesForLists } = useMovies({});
   const favoriteMovies = useMemo(() => {
-    return allMoviesForLists.filter((movie) => favorites.includes(movie.id));
-  }, [favorites, allMoviesForLists]);
+    return allMovies.filter((movie) => favorites.includes(movie.id));
+  }, [favorites, allMovies]);
 
   const watchLaterMovies = useMemo(() => {
-    return allMoviesForLists.filter((movie) => watchLater.includes(movie.id));
-  }, [watchLater, allMoviesForLists]);
+    return allMovies.filter((movie) => watchLater.includes(movie.id));
+  }, [watchLater, allMovies]);
 
   const handleMoodSelect = (mood: Mood) => {
     setSelectedMood(mood);
