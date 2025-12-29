@@ -16,9 +16,6 @@ import {
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
 } from '@/components/ui/pagination';
 import { moods } from '@/data/moods';
 import { Mood, Filters, Movie, UserReview } from '@/types/movie';
