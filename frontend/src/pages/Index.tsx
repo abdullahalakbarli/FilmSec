@@ -360,18 +360,16 @@ const Index = () => {
 
                               return (
                                 <PaginationItem key={page}>
-                                  <PaginationLink
-                                    href="#"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      setCurrentPage(page);
-                                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                                    }}
-                                    isActive={activePage === page}
-                                    className="cursor-pointer"
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePageChange(page)}
+                                    className={cn(
+                                      "h-10 w-10 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground flex items-center justify-center text-sm font-medium transition-colors",
+                                      activePage === page && "border-primary bg-primary text-primary-foreground"
+                                    )}
                                   >
                                     {page}
-                                  </PaginationLink>
+                                  </button>
                                 </PaginationItem>
                               );
                             })}
