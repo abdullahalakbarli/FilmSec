@@ -12,11 +12,11 @@ import SkeletonCard from '@/components/SkeletonCard';
 import AIChatAssistant from '@/components/AIChatAssistant';
 import { Button } from '@/components/ui/button';
 import { moods } from '@/data/moods';
-import { movies } from '@/data/movies';
 import { Mood, Filters, Movie, UserReview } from '@/types/movie';
 import { cn } from '@/lib/utils';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useWatchLater } from '@/hooks/useWatchLater';
+import { useMovies } from '@/hooks/useMovies';
 import { toast } from '@/hooks/use-toast';
 
 const defaultFilters: Filters = {
@@ -33,8 +33,14 @@ const Index = () => {
   const [showWatchLater, setShowWatchLater] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
-  const [isLoading, setIsLoading] = useState(false);
   const [reviews, setReviews] = useState<UserReview[]>([]);
+
+  // Fetch movies from API based on selected mood and filters
+  const { movies: allMovies, isLoading: moviesLoading, refreshMovies } = useMovies({
+    mood: selectedMood || undefined,
+    type: filters.type,
+    language: filters.language,
+  });
 
   // Load reviews from localStorage (can be migrated to API later)
   useEffect(() => {
@@ -46,29 +52,24 @@ const Index = () => {
     localStorage.setItem('reviews', JSON.stringify(reviews));
   }, [reviews]);
 
+  // Movies are already filtered by the API, so we just use them directly
   const filteredMovies = useMemo(() => {
     if (!selectedMood) return [];
+    return allMovies;
+  }, [selectedMood, allMovies]);
 
-    return movies.filter((movie) => {
-      if (movie.mood !== selectedMood) return false;
-      if (filters.type !== 'all' && movie.type !== filters.type) return false;
-      if (filters.language !== 'any' && movie.language !== filters.language) return false;
-      return true;
-    });
-  }, [selectedMood, filters]);
-
+  // For favorites and watch later, we need to fetch all movies to find matches
+  const { movies: allMoviesForLists } = useMovies({});
   const favoriteMovies = useMemo(() => {
-    return movies.filter((movie) => favorites.includes(movie.id));
-  }, [favorites]);
+    return allMoviesForLists.filter((movie) => favorites.includes(movie.id));
+  }, [favorites, allMoviesForLists]);
 
   const watchLaterMovies = useMemo(() => {
-    return movies.filter((movie) => watchLater.includes(movie.id));
-  }, [watchLater]);
+    return allMoviesForLists.filter((movie) => watchLater.includes(movie.id));
+  }, [watchLater, allMoviesForLists]);
 
   const handleMoodSelect = (mood: Mood) => {
-    setIsLoading(true);
     setSelectedMood(mood);
-    setTimeout(() => setIsLoading(false), 500);
   };
 
   const handleRandomMood = () => {
@@ -115,8 +116,8 @@ const Index = () => {
   };
 
   const handleNextRecommendation = () => {
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 300);
+    // Refresh movies with current filters
+    refreshMovies();
   };
 
   const handleToggleFavorite = async (movieId: string) => {
@@ -253,9 +254,9 @@ const Index = () => {
                 </aside>
               )}
 
-              {/* Movie Grid */}
-              <div id="movies-section" className="flex-1">
-                {isLoading ? (
+                  {/* Movie Grid */}
+                  <div id="movies-section" className="flex-1">
+                    {moviesLoading ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                     {[...Array(6)].map((_, i) => (
                       <SkeletonCard key={i} />
