@@ -38,6 +38,11 @@ async function apiCall<T>(
     }
 
     if (!response.ok) {
+      // If 401/403, token might be invalid - remove it
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem('auth_token');
+        // Don't return error for auth failures in some cases, let the calling code handle it
+      }
       return { error: data.error || `Server error: ${response.status} ${response.statusText}` };
     }
 

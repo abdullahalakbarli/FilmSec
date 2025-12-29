@@ -27,6 +27,7 @@ export function useWatchLater() {
     if (response.data) {
       setWatchLater(response.data);
     } else {
+      // If 403/401 error, token might be invalid - just set empty array
       setWatchLater([]);
     }
     

@@ -27,6 +27,7 @@ export function useFavorites() {
     if (response.data) {
       setFavorites(response.data);
     } else {
+      // If 403/401 error, token might be invalid - just set empty array
       setFavorites([]);
     }
     
