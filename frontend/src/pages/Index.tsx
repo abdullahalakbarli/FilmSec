@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { ArrowLeft, RefreshCw, SlidersHorizontal, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MoodCard from '@/components/MoodCard';
@@ -11,6 +11,15 @@ import RandomMoodButton from '@/components/RandomMoodButton';
 import SkeletonCard from '@/components/SkeletonCard';
 import AIChatAssistant from '@/components/AIChatAssistant';
 import { Button } from '@/components/ui/button';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { moods } from '@/data/moods';
 import { Mood, Filters, Movie, UserReview } from '@/types/movie';
 import { cn } from '@/lib/utils';
@@ -35,16 +44,32 @@ const Index = () => {
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [reviews, setReviews] = useState<UserReview[]>([]);
 
-  // Fetch movies from API based on selected mood and filters
-  const { movies: filteredMovies, isLoading: moviesLoading, refreshMovies } = useMovies(
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Fetch movies from API based on selected mood and filters with pagination
+  const { 
+    movies: filteredMovies, 
+    isLoading: moviesLoading, 
+    total,
+    totalPages,
+    currentPage: activePage,
+    goToPage,
+    refreshMovies 
+  } = useMovies(
     selectedMood
       ? {
           mood: selectedMood,
           type: filters.type,
           language: filters.language,
         }
-      : undefined
+      : undefined,
+    currentPage
   );
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedMood, filters.type, filters.language]);
 
   // Fetch all movies for favorites and watch later lists (only when drawers are open)
   const [allMovies, setAllMovies] = useState<Movie[]>([]);
@@ -227,7 +252,7 @@ const Index = () => {
                     {currentMoodInfo?.name}
                   </h2>
                   <p className="text-muted-foreground">
-                    {filteredMovies.length} nəticə tapıldı
+                    {total} nəticə tapıldı {totalPages > 1 && `(Səhifə ${activePage}/${totalPages})`}
                   </p>
                 </div>
               </div>
@@ -274,21 +299,107 @@ const Index = () => {
                     ))}
                   </div>
                 ) : filteredMovies.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                    {filteredMovies.map((movie, index) => (
-                      <MovieCard
-                        key={movie.id}
-                        movie={movie}
-                        isFavorite={favorites.includes(movie.id)}
-                        isInWatchLater={watchLater.includes(movie.id)}
-                        onToggleFavorite={() => handleToggleFavorite(movie.id)}
-                        onToggleWatchLater={() => handleToggleWatchLater(movie.id)}
-                        index={index}
-                        reviews={reviews}
-                        onAddReview={handleAddReview}
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                      {filteredMovies.map((movie, index) => (
+                        <MovieCard
+                          key={movie.id}
+                          movie={movie}
+                          isFavorite={favorites.includes(movie.id)}
+                          isInWatchLater={watchLater.includes(movie.id)}
+                          onToggleFavorite={() => handleToggleFavorite(movie.id)}
+                          onToggleWatchLater={() => handleToggleWatchLater(movie.id)}
+                          index={index}
+                          reviews={reviews}
+                          onAddReview={handleAddReview}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="mt-8 flex justify-center">
+                        <Pagination>
+                          <PaginationContent>
+                            <PaginationItem>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (activePage > 1) handlePageChange(activePage - 1);
+                                }}
+                                disabled={activePage <= 1}
+                                className={cn(
+                                  "inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                                  activePage <= 1 && "pointer-events-none opacity-50"
+                                )}
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                                <span>Əvvəlki</span>
+                              </button>
+                            </PaginationItem>
+
+                            {/* Show page numbers */}
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                              // Show first page, last page, current page, and pages around current
+                              const showPage =
+                                page === 1 ||
+                                page === totalPages ||
+                                (page >= activePage - 2 && page <= activePage + 2);
+
+                              if (!showPage) {
+                                // Show ellipsis
+                                if (
+                                  (page === activePage - 3 && activePage > 4) ||
+                                  (page === activePage + 3 && activePage < totalPages - 3)
+                                ) {
+                                  return (
+                                    <PaginationItem key={page}>
+                                      <PaginationEllipsis />
+                                    </PaginationItem>
+                                  );
+                                }
+                                return null;
+                              }
+
+                              return (
+                                <PaginationItem key={page}>
+                                  <PaginationLink
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setCurrentPage(page);
+                                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    isActive={activePage === page}
+                                    className="cursor-pointer"
+                                  >
+                                    {page}
+                                  </PaginationLink>
+                                </PaginationItem>
+                              );
+                            })}
+
+                            <PaginationItem>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (activePage < totalPages) handlePageChange(activePage + 1);
+                                }}
+                                disabled={activePage >= totalPages}
+                                className={cn(
+                                  "inline-flex items-center justify-center gap-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                                  activePage >= totalPages && "pointer-events-none opacity-50"
+                                )}
+                              >
+                                <span>Sonrakı</span>
+                                <ChevronRight className="h-4 w-4" />
+                              </button>
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-4">

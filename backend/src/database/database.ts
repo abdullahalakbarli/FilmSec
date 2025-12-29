@@ -122,12 +122,16 @@ export const getMoviesByMood = async (mood: Mood): Promise<Movie[]> => {
   }));
 };
 
-export const getMoviesWithFilters = async (filters: {
-  mood?: Mood;
-  type?: 'movie' | 'series' | 'all';
-  language?: string;
-}): Promise<Movie[]> => {
-  let query = supabase.from('movies').select('*');
+export const getMoviesWithFilters = async (
+  filters: {
+    mood?: Mood;
+    type?: 'movie' | 'series' | 'all';
+    language?: string;
+  },
+  page: number = 1,
+  limit: number = 50
+): Promise<{ movies: Movie[]; total: number; page: number; totalPages: number }> => {
+  let query = supabase.from('movies').select('*', { count: 'exact' });
 
   if (filters.mood) {
     query = query.eq('mood', filters.mood);
@@ -141,15 +145,20 @@ export const getMoviesWithFilters = async (filters: {
     query = query.eq('language', filters.language);
   }
 
-  query = query.order('title').range(0, 99999); // Get all movies matching filters
+  // Calculate pagination
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
 
-  const { data, error } = await query;
+  query = query.order('title').range(from, to);
+
+  const { data, error, count } = await query;
 
   if (error) {
     console.error('Error fetching movies with filters:', error);
-    return [];
+    return { movies: [], total: 0, page, totalPages: 0 };
   }
-  return (data || []).map(m => ({
+
+  const movies = (data || []).map(m => ({
     id: m.id,
     title: m.title,
     posterUrl: m.poster_url,
@@ -162,6 +171,11 @@ export const getMoviesWithFilters = async (filters: {
     language: m.language,
     trailerUrl: m.trailer_url || undefined,
   }));
+
+  const total = count || 0;
+  const totalPages = Math.ceil(total / limit);
+
+  return { movies, total, page, totalPages };
 };
 
 // Users

@@ -4,10 +4,10 @@ import { Mood } from '../types';
 
 const router = Router();
 
-// Get all movies
+// Get all movies with pagination
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { mood, type, language } = req.query;
+    const { mood, type, language, page = '1', limit = '50' } = req.query;
 
     const filters: {
       mood?: Mood;
@@ -27,8 +27,11 @@ router.get('/', async (req: Request, res: Response) => {
       filters.language = language;
     }
 
-    const movies = await getMoviesWithFilters(filters);
-    res.json(movies);
+    const pageNum = parseInt(page as string, 10) || 1;
+    const limitNum = parseInt(limit as string, 10) || 50;
+
+    const result = await getMoviesWithFilters(filters, pageNum, limitNum);
+    res.json(result);
   } catch (error) {
     console.error('Get movies error:', error);
     res.status(500).json({ error: 'Internal server error' });
