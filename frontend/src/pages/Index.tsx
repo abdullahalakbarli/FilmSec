@@ -255,7 +255,14 @@ const Index = () => {
                     {currentMoodInfo?.name}
                   </h2>
                   <p className="text-muted-foreground">
-                    {total} nəticə tapıldı {totalPages > 1 && `(Səhifə ${activePage}/${totalPages})`}
+                    {moviesLoading ? (
+                      'Yüklənir...'
+                    ) : (
+                      <>
+                        {filteredMovies.length > 0 && `${filteredMovies.length} nəticə bu səhifədə`}
+                        {totalPages > 1 && ` (Səhifə ${activePage}/${totalPages})`}
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
