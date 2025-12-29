@@ -155,8 +155,7 @@ const Index = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top when page changes
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Don't scroll to top - let user stay where they are
   };
 
   const handleToggleFavorite = async (movieId: string) => {
