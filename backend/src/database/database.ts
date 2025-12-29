@@ -42,10 +42,12 @@ export const getMoodById = async (id: string): Promise<MoodInfo | null> => {
 
 // Movies
 export const getMovies = async (): Promise<Movie[]> => {
+  // Supabase default limit is 1000, we need to use range to get all movies
   const { data, error } = await supabase
     .from('movies')
     .select('*')
-    .order('title');
+    .order('title')
+    .range(0, 99999); // Get up to 100k movies
 
   if (error) {
     console.error('Error fetching movies:', error);
@@ -98,7 +100,8 @@ export const getMoviesByMood = async (mood: Mood): Promise<Movie[]> => {
     .from('movies')
     .select('*')
     .eq('mood', mood)
-    .order('title');
+    .order('title')
+    .range(0, 99999); // Get all movies for this mood
 
   if (error) {
     console.error('Error fetching movies by mood:', error);
@@ -138,7 +141,7 @@ export const getMoviesWithFilters = async (filters: {
     query = query.eq('language', filters.language);
   }
 
-  query = query.order('title');
+  query = query.order('title').range(0, 99999); // Get all movies matching filters
 
   const { data, error } = await query;
 
