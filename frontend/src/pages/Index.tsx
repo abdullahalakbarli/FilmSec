@@ -259,7 +259,7 @@ const Index = () => {
                       'Yüklənir...'
                     ) : (
                       <>
-                        {filteredMovies.length > 0 && `${filteredMovies.length} nəticə bu səhifədə`}
+                        {total > 0 && `${total} nəticə tapıldı`}
                         {totalPages > 1 && ` (Səhifə ${activePage}/${totalPages})`}
                       </>
                     )}
