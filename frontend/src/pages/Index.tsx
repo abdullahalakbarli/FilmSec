@@ -153,6 +153,12 @@ const Index = () => {
     refreshMovies();
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleToggleFavorite = async (movieId: string) => {
     const result = await toggleFavorite(movieId);
     if (result.error) {
