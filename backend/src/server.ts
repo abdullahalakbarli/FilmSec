@@ -19,7 +19,14 @@ const PORT = process.env.PORT || 4243;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:4242', 'http://localhost:4244', 'http://192.168.100.12:4242', 'http://192.168.100.12:4244'],
+  origin: [
+    'http://localhost:4242', 
+    'http://localhost:4244', 
+    'http://192.168.100.12:4242', 
+    'http://192.168.100.12:4244',
+    'https://film-sec.vercel.app',
+    'https://filmsec.vercel.app'
+  ],
   credentials: true
 }));
 app.use(express.json());
