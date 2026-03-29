@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(255) NOT NULL,
   password VARCHAR(255) NOT NULL,
   avatar TEXT,
+  role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart, Menu, Clock, Film, Users, LogIn, LogOut, User } from 'lucide-react';
+import { Heart, Menu, Clock, Film, Users, LogIn, LogOut, User, Shield, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -19,9 +19,18 @@ interface HeaderProps {
 const Header = ({ favoritesCount, watchLaterCount, onFavoritesClick, onWatchLaterClick, onLogoClick }: HeaderProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  
+  // Safety fallback for context issues during development/hot reload
+  let auth: any;
+  try {
+    auth = useAuth();
+  } catch (e) {
+    auth = { user: null, signOut: () => {}, isAdmin: false };
+  }
+  const { user, signOut, isAdmin } = auth;
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | undefined) => {
+    if (!name) return '??';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
@@ -51,6 +60,19 @@ const Header = ({ favoritesCount, watchLaterCount, onFavoritesClick, onWatchLate
             <Users className="w-5 h-5 mr-2 transition-colors group-hover:text-primary" />
             <span>Cəmiyyət</span>
           </Button>
+
+          {/* Admin Link - Only visible to admin users */}
+          {isAdmin && (
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/admin')}
+              className="relative group bg-primary/10 hover:bg-primary/20"
+            >
+              <Shield className="w-5 h-5 mr-2 text-primary" />
+              <span className="text-primary font-medium">Admin</span>
+            </Button>
+          )}
+
           <Button
             variant="ghost"
             onClick={onWatchLaterClick}
@@ -134,6 +156,21 @@ const Header = ({ favoritesCount, watchLaterCount, onFavoritesClick, onWatchLate
                 <Users className="w-6 h-6" />
                 <span>Cəmiyyət</span>
               </button>
+
+              {/* Mobile Admin Link */}
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    navigate('/admin');
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center gap-3 text-lg font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  <Shield className="w-6 h-6" />
+                  <span>Admin Panel</span>
+                </button>
+              )}
+
               <button
                 onClick={() => {
                   onWatchLaterClick();

@@ -10,6 +10,7 @@ import discussionsRoutes from './routes/discussions';
 import favoritesRoutes from './routes/favorites';
 import watchLaterRoutes from './routes/watchLater';
 import aiRoutes from './routes/ai';
+import adminRoutes from './routes/admin';
 
 dotenv.config();
 
@@ -17,7 +18,10 @@ const app: Express = express();
 const PORT = process.env.PORT || 4243;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:4242', 'http://localhost:4244', 'http://192.168.100.12:4242', 'http://192.168.100.12:4244'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -59,6 +63,7 @@ app.use('/api/discussions', discussionsRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/watch-later', watchLaterRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

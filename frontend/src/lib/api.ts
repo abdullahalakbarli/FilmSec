@@ -1,9 +1,20 @@
 // API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4243/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.100.12:4243/api';
+
+/** Dispatched on same window after token is cleared (401/403 or explicit sign-out). */
+export const AUTH_SESSION_ENDED_EVENT = 'filmmood:auth-session-ended';
+
+export function clearAuthSession() {
+  localStorage.removeItem('auth_token');
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(AUTH_SESSION_ENDED_EVENT));
+  }
+}
 
 export interface ApiResponse<T> {
   data?: T;
   error?: string;
+  status?: number;
 }
 
 // Helper function for API calls
@@ -12,18 +23,26 @@ async function apiCall<T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   try {
-    const token = localStorage.getItem('auth_token');
-    
+    // Snapshot token at request start so a late 401 (e.g. stale /auth/me) cannot
+    // wipe a newer token set by a concurrent successful sign-in.
+    const tokenAtRequest = localStorage.getItem('auth_token');
+    const skipAuthHeader =
+      endpoint.startsWith('/auth/signin') || endpoint.startsWith('/auth/signup');
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...options.headers,
     };
 
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    // Never attach stale Authorization header to sign-in/sign-up requests.
+    // These endpoints should rely only on the credentials in the body.
+    if (tokenAtRequest && !skipAuthHeader) {
+      headers['Authorization'] = `Bearer ${tokenAtRequest}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const url = `${API_BASE_URL}${endpoint}`;
+    
+    const response = await fetch(url, {
       ...options,
       headers,
     });
@@ -38,17 +57,24 @@ async function apiCall<T>(
     }
 
     if (!response.ok) {
-      // If 401/403, token might be invalid - remove it
       if (response.status === 401 || response.status === 403) {
-        localStorage.removeItem('auth_token');
-        // Don't return error for auth failures in some cases, let the calling code handle it
+        // For sign-in/sign-up, don't clear auth session based on bad credentials.
+        if (!skipAuthHeader) {
+          const current = localStorage.getItem('auth_token');
+          if (tokenAtRequest && current === tokenAtRequest) {
+            clearAuthSession();
+          }
+        }
       }
-      return { error: data.error || `Server error: ${response.status} ${response.statusText}` };
+      return { 
+        error: data.error || `Server error: ${response.status} ${response.statusText}`,
+        status: response.status 
+      };
     }
 
     return { data };
   } catch (error) {
-    console.error('API call error:', error);
+    console.error('API call error:', error, 'URL:', `${API_BASE_URL}${endpoint}`);
     return { error: 'Network error. Please try again.' };
   }
 }

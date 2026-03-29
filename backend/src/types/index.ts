@@ -63,6 +63,7 @@ export interface User {
   name: string;
   password: string;
   avatar?: string;
+  role?: string;
   createdAt: string;
 }
 
@@ -71,6 +72,7 @@ export interface UserPublic {
   email: string;
   name: string;
   avatar?: string;
+  role?: string;
 }
 
 export interface Filters {

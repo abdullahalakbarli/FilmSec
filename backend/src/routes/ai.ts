@@ -5,11 +5,6 @@ import { supabase } from '../config/supabase';
 
 const router = Router();
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
 interface AIResponse {
   content: string;
   recommendations?: Array<{
@@ -617,7 +612,7 @@ function generateAIResponse(
     const recommendations = filteredMovies.slice(0, 3).map(m => ({
       id: m.id,
       title: m.title,
-      posterUrl: m.poster_url,
+      posterUrl: m.posterUrl,
       rating: parseFloat(m.rating),
       year: m.year,
       mood: m.mood
@@ -734,7 +729,7 @@ function generateAIResponse(
     const recommendations = filteredMovies.slice(0, 3).map(m => ({
       id: m.id,
       title: m.title,
-      posterUrl: m.poster_url,
+      posterUrl: m.posterUrl,
       rating: parseFloat(m.rating),
       year: m.year,
       mood: m.mood

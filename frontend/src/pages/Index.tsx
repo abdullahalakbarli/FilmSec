@@ -24,12 +24,21 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useWatchLater } from '@/hooks/useWatchLater';
 import { useMovies } from '@/hooks/useMovies';
 import { toast } from '@/hooks/use-toast';
+import apiCall from '@/lib/api';
 
 const defaultFilters: Filters = {
   type: 'all',
   duration: 'any',
   language: 'any',
 };
+
+/** Matches backend `GET /api/movies` paginated JSON (see `useMovies`). */
+interface MoviesPaginatedResponse {
+  movies: Movie[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
 
 const Index = () => {
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
@@ -74,10 +83,12 @@ const Index = () => {
     if (showFavorites || showWatchLater) {
       // Fetch all movies when drawers are opened
       const fetchAllMovies = async () => {
-        const response = await apiCall<Movie[]>('/movies');
-        if (response.data) {
-          setAllMovies(response.data);
-        }
+        // `/movies` returns `{ movies, total, page, totalPages }`, not a raw array.
+        const response = await apiCall<MoviesPaginatedResponse>(
+          '/movies?page=1&limit=50000'
+        );
+        const movies = response.data?.movies;
+        setAllMovies(Array.isArray(movies) ? movies : []);
       };
       fetchAllMovies();
     }
@@ -94,11 +105,13 @@ const Index = () => {
   }, [reviews]);
 
   const favoriteMovies = useMemo(() => {
-    return allMovies.filter((movie) => favorites.includes(movie.id));
+    const list = Array.isArray(allMovies) ? allMovies : [];
+    return list.filter((movie) => favorites.includes(movie.id));
   }, [favorites, allMovies]);
 
   const watchLaterMovies = useMemo(() => {
-    return allMovies.filter((movie) => watchLater.includes(movie.id));
+    const list = Array.isArray(allMovies) ? allMovies : [];
+    return list.filter((movie) => watchLater.includes(movie.id));
   }, [watchLater, allMovies]);
 
   const handleMoodSelect = (mood: Mood) => {

@@ -72,12 +72,14 @@ const AIChatAssistant = ({ favorites, watchLater, onMovieSelect }: AIChatAssista
   const handleSend = async () => {
     if (!input.trim()) return;
     
-    if (!user) {
-      // Show message that user needs to login
+    const token = localStorage.getItem('auth_token');
+    if (!user || !token) {
       const errorMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: "Please log in to use the AI assistant. I can help you find movies based on your preferences! 🔐"
+        content: user && !token
+          ? "Your session has expired. Please sign in again to use the AI assistant. 🔐"
+          : "Please log in to use the AI assistant. I can help you find movies based on your preferences! 🔐"
       };
       setMessages(prev => [...prev, errorMessage]);
       return;

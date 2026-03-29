@@ -1,6 +1,22 @@
 import { supabase } from '../config/supabase';
 import { movies } from '../data/movies';
 import { moods } from '../data/moods';
+import bcrypt from 'bcryptjs';
+
+// CTF ADMIN USER CONFIGURATION:
+// Admin credentials for the CTF challenge:
+// Email: admin@filmsec.com
+// Password: AdminSecure2024!
+// Role: admin
+// 
+// Note: This admin user can be accessed via SQL injection vulnerability
+// in the login endpoint, or by logging in with the above credentials.
+const ADMIN_USER = {
+  email: 'admin@filmsec.com',
+  password: 'AdminSecure2024!',
+  name: 'System Administrator',
+  role: 'admin',
+};
 
 async function seedDatabase() {
   console.log('🌱 Starting database seeding...');
@@ -51,6 +67,31 @@ async function seedDatabase() {
     return;
   }
   console.log('✅ Movies seeded successfully');
+
+  // CTF: Seed admin user
+  console.log('👤 Seeding admin user...');
+  const hashedAdminPassword = await bcrypt.hash(ADMIN_USER.password, 10);
+  
+  const { error: adminError } = await supabase
+    .from('users')
+    .upsert(
+      {
+        email: ADMIN_USER.email,
+        name: ADMIN_USER.name,
+        password: hashedAdminPassword,
+        role: ADMIN_USER.role,
+      },
+      { onConflict: 'email' }
+    );
+
+  if (adminError) {
+    console.error('❌ Error seeding admin user:', adminError);
+  } else {
+    console.log('✅ Admin user seeded successfully');
+    console.log('   Email:', ADMIN_USER.email);
+    console.log('   Password:', ADMIN_USER.password);
+    console.log('   Role:', ADMIN_USER.role);
+  }
 
   console.log('🎉 Database seeding completed!');
 }
