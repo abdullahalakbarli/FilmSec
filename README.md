@@ -100,7 +100,7 @@ App default: `http://localhost:4242`
 | `SUPABASE_URL` | backend | Supabase project URL |
 | `SUPABASE_ANON_KEY` | backend | Supabase anon key (safe for server; never ship service key to frontend) |
 | `SUPABASE_SERVICE_KEY` | backend | Optional; seed scripts only |
-| `CORS_ORIGINS` | backend | Comma-separated frontend URLs |
+| `CORS_ORIGINS` | backend | Optional extra frontend URLs (Vercel production URLs are built in) |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | backend | Optional seed admin account |
 | `VITE_API_URL` | frontend | Backend API base URL |
 
@@ -123,7 +123,7 @@ Health check: `GET /health`
 
 - Never commit `.env` files or Supabase **service role** keys.
 - Use a strong, unique `JWT_SECRET` in production.
-- Set `CORS_ORIGINS` to your real frontend domain only.
+- `https://film-sec.vercel.app` and `https://filmsec.vercel.app` are allowed by default; add more via `CORS_ORIGINS` if needed.
 - If credentials were ever committed to git, **rotate** Supabase keys and `JWT_SECRET` before going public.
 - Run `remove-vulnerable-auth.sql` on databases that may have legacy RPC functions.
 

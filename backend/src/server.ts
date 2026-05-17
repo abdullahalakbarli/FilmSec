@@ -17,20 +17,43 @@ dotenv.config();
 const app: Express = express();
 const PORT = process.env.PORT || 4243;
 
-const defaultOrigins = [
+const localOrigins = [
   'http://localhost:4242',
   'http://localhost:4244',
   'http://127.0.0.1:4242',
+  'http://127.0.0.1:4244',
 ];
 
-const corsOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
-  : defaultOrigins;
+const productionOrigins = [
+  'https://film-sec.vercel.app',
+  'https://filmsec.vercel.app',
+  'https://www.film-sec.vercel.app',
+  'https://www.filmsec.vercel.app',
+];
 
-app.use(cors({
-  origin: corsOrigins,
-  credentials: true,
-}));
+const envOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+  : [];
+
+const allowedOrigins = new Set([...localOrigins, ...productionOrigins, ...envOrigins]);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Same-origin or non-browser clients (no Origin header)
+      if (!origin || allowedOrigins.has(origin)) {
+        callback(null, origin ?? true);
+        return;
+      }
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(null, false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -82,5 +105,6 @@ app.use((err: Error, req: Request, res: Response, _next: () => void) => {
 
 app.listen(PORT, () => {
   console.log(`FilmMood API server is running on port ${PORT}`);
+  console.log('CORS allowed origins:', [...allowedOrigins].join(', '));
   console.log(`Health check: http://localhost:${PORT}/health`);
 });
