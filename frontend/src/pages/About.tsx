@@ -31,7 +31,7 @@ Yeni favoritləri kəşf edin: Trailer-lərə baxın, qısa təsvirləri oxuyun 
 
 Niyə Varıq
 
-FilmSec -- Biz inanırıq ki, nəyə baxacağınıza qərar vermək əyləncəli, asan və sizə uyğun olmalıdır. Məqsədimiz hər film gecəsini və ya binge-watching sessiyasını yaddaqalan və zövqlü etməkdir.
+FilmMood — Biz inanırıq ki, nəyə baxacağınıza qərar vermək əyləncəli, asan və sizə uyğun olmalıdır. Məqsədimiz hər film gecəsini və ya binge-watching sessiyasını yaddaqalan və zövqlü etməkdir.
 
 Bizə Qoşulun
 
@@ -73,7 +73,7 @@ Mood-unuzu seçin, kəşf edin və bu gün növbəti favorit filminizi tapın!
                 <h1 className="text-4xl md:text-5xl font-bold">Haqqımızda</h1>
               </div>
               <p className="text-muted-foreground text-lg">
-                FilmSEC - Ruh halınıza uyğun film və serial tövsiyələri
+                FilmMood - Ruh halınıza uyğun film və serial tövsiyələri
               </p>
             </div>
 

@@ -1,5 +1,5 @@
 // API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.100.12:4243/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4243/api';
 
 /** Dispatched on same window after token is cleared (401/403 or explicit sign-out). */
 export const AUTH_SESSION_ENDED_EVENT = 'filmmood:auth-session-ended';

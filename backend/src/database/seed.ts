@@ -3,26 +3,14 @@ import { movies } from '../data/movies';
 import { moods } from '../data/moods';
 import bcrypt from 'bcryptjs';
 
-// CTF ADMIN USER CONFIGURATION:
-// Admin credentials for the CTF challenge:
-// Email: admin@filmsec.com
-// Password: AdminSecure2024!
-// Role: admin
-// 
-// Note: This admin user can be accessed via SQL injection vulnerability
-// in the login endpoint, or by logging in with the above credentials.
-const ADMIN_USER = {
-  email: 'admin@filmsec.com',
-  password: 'AdminSecure2024!',
-  name: 'System Administrator',
-  role: 'admin',
-};
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@filmmood.app';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_NAME = process.env.ADMIN_NAME || 'System Administrator';
 
 async function seedDatabase() {
-  console.log('🌱 Starting database seeding...');
+  console.log('Starting database seeding...');
 
-  // Seed moods
-  console.log('📝 Seeding moods...');
+  console.log('Seeding moods...');
   const { error: moodsError } = await supabase
     .from('moods')
     .upsert(
@@ -36,13 +24,12 @@ async function seedDatabase() {
     );
 
   if (moodsError) {
-    console.error('❌ Error seeding moods:', moodsError);
+    console.error('Error seeding moods:', moodsError);
     return;
   }
-  console.log('✅ Moods seeded successfully');
+  console.log('Moods seeded successfully');
 
-  // Seed movies
-  console.log('📝 Seeding movies...');
+  console.log('Seeding movies...');
   const { error: moviesError } = await supabase
     .from('movies')
     .upsert(
@@ -63,40 +50,40 @@ async function seedDatabase() {
     );
 
   if (moviesError) {
-    console.error('❌ Error seeding movies:', moviesError);
+    console.error('Error seeding movies:', moviesError);
     return;
   }
-  console.log('✅ Movies seeded successfully');
+  console.log('Movies seeded successfully');
 
-  // CTF: Seed admin user
-  console.log('👤 Seeding admin user...');
-  const hashedAdminPassword = await bcrypt.hash(ADMIN_USER.password, 10);
-  
-  const { error: adminError } = await supabase
-    .from('users')
-    .upsert(
-      {
-        email: ADMIN_USER.email,
-        name: ADMIN_USER.name,
-        password: hashedAdminPassword,
-        role: ADMIN_USER.role,
-      },
-      { onConflict: 'email' }
-    );
-
-  if (adminError) {
-    console.error('❌ Error seeding admin user:', adminError);
+  if (!ADMIN_PASSWORD) {
+    console.log('Skipping admin user seed (set ADMIN_PASSWORD in .env to create an admin account).');
   } else {
-    console.log('✅ Admin user seeded successfully');
-    console.log('   Email:', ADMIN_USER.email);
-    console.log('   Password:', ADMIN_USER.password);
-    console.log('   Role:', ADMIN_USER.role);
+    console.log('Seeding admin user...');
+    const hashedAdminPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
+
+    const { error: adminError } = await supabase
+      .from('users')
+      .upsert(
+        {
+          email: ADMIN_EMAIL,
+          name: ADMIN_NAME,
+          password: hashedAdminPassword,
+          role: 'admin',
+        },
+        { onConflict: 'email' }
+      );
+
+    if (adminError) {
+      console.error('Error seeding admin user:', adminError);
+    } else {
+      console.log('Admin user seeded successfully');
+      console.log('   Email:', ADMIN_EMAIL);
+    }
   }
 
-  console.log('🎉 Database seeding completed!');
+  console.log('Database seeding completed!');
 }
 
-// Run if called directly
 if (require.main === module) {
   seedDatabase()
     .then(() => {
@@ -110,4 +97,3 @@ if (require.main === module) {
 }
 
 export default seedDatabase;
-

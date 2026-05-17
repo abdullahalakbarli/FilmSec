@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Build output
+dist/
+dist-ssr/
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Internal docs (use root README.md for public repo)
+CTF-WRITEUP.md
+CHANGELOG.md
+backend/README.md
+frontend/README.md
+
+# Legacy CTF / challenge artifacts
+backend/src/database/ctf-setup.sql
+
+# Local tooling with credentials (use env vars instead)
+send.py
+Additional Data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/

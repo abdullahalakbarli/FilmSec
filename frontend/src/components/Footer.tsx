@@ -11,7 +11,7 @@ const Footer = () => {
             <div className="w-8 h-8 rounded-lg bg-mood-happy flex items-center justify-center">
               <Film className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold">FilmSEC</span>
+            <span className="font-semibold">FilmMood</span>
           </div>
 
           {/* Links */}

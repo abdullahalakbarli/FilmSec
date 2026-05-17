@@ -3,25 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import apiCall from '@/lib/api';
-import { 
-  Shield, 
-  Users, 
-  Film, 
-  MessageSquare, 
-  Star, 
+import {
+  Shield,
+  Users,
+  Film,
+  MessageSquare,
+  Star,
   AlertTriangle,
-  FileText,
   Activity,
   Lock,
   Server,
-  Key
 } from 'lucide-react';
 
 interface AdminStats {
@@ -42,28 +39,25 @@ interface AdminStats {
   topMoods: Array<{ mood: string; count: number }>;
 }
 
-interface SecurityMemo {
-  memo: {
-    id: string;
-    title: string;
-    date: string;
-    classification: string;
-    content: string;
-    recoveryKey: string;
-    notes: string;
+interface SecurityOverview {
+  overview: {
+    authentication: string;
+    authorization: string;
+    databaseAccess: string;
+    lastReview: string;
   };
+  policies: string[];
 }
 
 const AdminDashboard = () => {
   const { user, isAdmin, isLoading } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [securityMemo, setSecurityMemo] = useState<SecurityMemo | null>(null);
+  const [securityOverview, setSecurityOverview] = useState<SecurityOverview | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showWatchLater, setShowWatchLater] = useState(false);
 
-  // Redirect non-admin users
   useEffect(() => {
     if (!isLoading && !isAdmin) {
       toast({
@@ -75,11 +69,10 @@ const AdminDashboard = () => {
     }
   }, [isAdmin, isLoading, navigate]);
 
-  // Fetch admin stats
   useEffect(() => {
     if (isAdmin) {
       fetchStats();
-      fetchSecurityMemo();
+      fetchSecurityOverview();
     }
   }, [isAdmin]);
 
@@ -101,15 +94,14 @@ const AdminDashboard = () => {
     }
   };
 
-  // CTF: Fetch the security memo containing the flag
-  const fetchSecurityMemo = async () => {
+  const fetchSecurityOverview = async () => {
     try {
-      const response = await apiCall<SecurityMemo>('/admin/security-memo');
+      const response = await apiCall<SecurityOverview>('/admin/security-overview');
       if (response.data) {
-        setSecurityMemo(response.data);
+        setSecurityOverview(response.data);
       }
     } catch (error) {
-      console.error('Failed to fetch security memo:', error);
+      console.error('Failed to fetch security overview:', error);
     }
   };
 
@@ -132,7 +124,6 @@ const AdminDashboard = () => {
       />
 
       <main className="flex-1 container mx-auto px-4 pt-24 pb-12">
-        {/* Admin Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Shield className="w-8 h-8 text-primary" />
@@ -154,9 +145,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -219,7 +208,6 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
-            {/* Top Moods */}
             <Card>
               <CardHeader>
                 <CardTitle>Content Distribution by Mood</CardTitle>
@@ -236,7 +224,6 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Recent Activity */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -265,65 +252,56 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Security Tab - CTF: Contains the flag */}
           <TabsContent value="security" className="space-y-6">
             <Card className="border-2 border-primary">
               <CardHeader className="bg-primary/5">
                 <div className="flex items-center gap-2">
                   <Shield className="w-6 h-6 text-primary" />
-                  <CardTitle>Internal Security Memo</CardTitle>
+                  <CardTitle>Security Overview</CardTitle>
                 </div>
-                <CardDescription>
-                  Classified administrative information - Admin eyes only
-                </CardDescription>
+                <CardDescription>Platform security configuration summary</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                {securityMemo ? (
+                {securityOverview ? (
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <FileText className="w-4 h-4" />
-                      <span>Memo ID: {securityMemo.memo.id}</span>
-                      <Separator orientation="vertical" className="h-4" />
-                      <span>Date: {new Date(securityMemo.memo.date).toLocaleDateString()}</span>
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h4 className="font-semibold mb-2">{securityMemo.memo.content}</h4>
-                      
-                      {/* CTF: The flag is displayed here in a realistic security memo */}
-                      <div className="mt-4 p-4 bg-muted rounded-lg border border-dashed border-primary/50">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Key className="w-4 h-4 text-primary" />
-                          <span className="font-mono text-sm font-semibold">Recovery Key:</span>
-                        </div>
-                        <code className="block font-mono text-sm bg-background p-3 rounded border break-all">
-                          {securityMemo.memo.recoveryKey}
-                        </code>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="p-3 rounded-lg bg-muted">
+                        <p className="text-xs text-muted-foreground mb-1">Authentication</p>
+                        <p className="text-sm font-medium">{securityOverview.overview.authentication}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-muted">
+                        <p className="text-xs text-muted-foreground mb-1">Authorization</p>
+                        <p className="text-sm font-medium">{securityOverview.overview.authorization}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-muted sm:col-span-2">
+                        <p className="text-xs text-muted-foreground mb-1">Database access</p>
+                        <p className="text-sm font-medium">{securityOverview.overview.databaseAccess}</p>
                       </div>
                     </div>
-
-                    <div className="flex items-start gap-2 mt-4 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
-                      <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
-                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                        {securityMemo.memo.notes}
-                      </p>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Security policies</h4>
+                      <ul className="space-y-2">
+                        {securityOverview.policies.map((policy) => (
+                          <li key={policy} className="text-sm text-muted-foreground flex gap-2">
+                            <span className="text-primary">•</span>
+                            {policy}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-
-                    <Badge variant="destructive" className="mt-4">
-                      {securityMemo.memo.classification}
-                    </Badge>
+                    <p className="text-xs text-muted-foreground">
+                      Last reviewed: {securityOverview.overview.lastReview}
+                    </p>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center py-8 text-muted-foreground">
-                    Loading security memo...
+                    Loading security overview...
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* Security Incident Card */}
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -343,14 +321,14 @@ const AdminDashboard = () => {
                       All systems operational. Last check: {new Date().toLocaleString()}
                     </p>
                   </div>
-                  
+
                   <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center gap-2">
                       <Badge className="bg-blue-600 hover:bg-blue-700 text-white">INFO</Badge>
                       <span className="text-sm font-medium text-blue-900 dark:text-blue-100">Authentication System</span>
                     </div>
                     <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                      Using enhanced authentication with role-based access control.
+                      Using JWT authentication with role-based access control.
                     </p>
                   </div>
                 </div>
@@ -358,7 +336,6 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* System Tab */}
           <TabsContent value="system" className="space-y-6">
             <Card>
               <CardHeader>
@@ -376,7 +353,7 @@ const AdminDashboard = () => {
                     </div>
                     <Badge className="bg-green-600 hover:bg-green-700 text-white">Online</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-green-600" />
@@ -397,23 +374,22 @@ const AdminDashboard = () => {
                 <Separator className="my-4" />
 
                 <div className="text-sm text-muted-foreground">
-                  <p>FilmSEC Admin Panel v1.0.0-ctf</p>
+                  <p>FilmMood Admin Panel v1.0.0</p>
                   <p>Last updated: {new Date().toLocaleDateString()}</p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Debug Panel - Hidden feature for CTF */}
             <Card className="border-dashed border-muted-foreground/30">
               <CardHeader>
                 <CardTitle className="text-muted-foreground flex items-center gap-2">
                   <Activity className="w-4 h-4" />
-                  Debug Information
+                  Session diagnostics
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Internal system diagnostics for troubleshooting purposes.
+                  Current session information for troubleshooting.
                 </p>
                 <div className="font-mono text-xs text-muted-foreground space-y-1">
                   <p>Session: Active</p>

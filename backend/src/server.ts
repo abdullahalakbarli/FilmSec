@@ -17,25 +17,26 @@ dotenv.config();
 const app: Express = express();
 const PORT = process.env.PORT || 4243;
 
-// Middleware
+const defaultOrigins = [
+  'http://localhost:4242',
+  'http://localhost:4244',
+  'http://127.0.0.1:4242',
+];
+
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+  : defaultOrigins;
+
 app.use(cors({
-  origin: [
-    'http://localhost:4242', 
-    'http://localhost:4244', 
-    'http://192.168.100.12:4242', 
-    'http://192.168.100.12:4244',
-    'https://film-sec.vercel.app',
-    'https://filmsec.vercel.app'
-  ],
-  credentials: true
+  origin: corsOrigins,
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Root route
 app.get('/', (req: Request, res: Response) => {
-  res.json({ 
-    message: 'FilmMood API', 
+  res.json({
+    message: 'FilmMood API',
     version: '1.0.0',
     author: 'Abdullah Alakberli',
     status: 'running',
@@ -50,17 +51,15 @@ app.get('/', (req: Request, res: Response) => {
       discussions: '/api/discussions',
       favorites: '/api/favorites',
       watchLater: '/api/watch-later',
-      ai: '/api/ai'
-    }
+      ai: '/api/ai',
+    },
   });
 });
 
-// Health check
 app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'FilmMood API is running' });
 });
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', moviesRoutes);
 app.use('/api/moods', moodsRoutes);
@@ -72,20 +71,16 @@ app.use('/api/watch-later', watchLaterRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
 
-// 404 handler
 app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Error handler
-app.use((err: Error, req: Request, res: Response, next: any) => {
+app.use((err: Error, req: Request, res: Response, _next: () => void) => {
   console.error('Error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 FilmMood API server is running on port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`📚 API base URL: http://localhost:${PORT}/api`);
+  console.log(`FilmMood API server is running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
 });
-

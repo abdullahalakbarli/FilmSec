@@ -1,18 +1,12 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { authenticateToken, AuthRequest, requireAdmin } from '../middleware/auth';
 import { getUsers, getMovies, getComments, getReviews, getDiscussions } from '../database/database';
 
 const router = Router();
 
-// CTF FLAG: This is the flag that will be displayed in the admin dashboard
-// flag{7f3c91d2a8be4c6f9d1eab27c4f80193_filmsec_admin_only}
-const CTF_FLAG = 'flag{7f3c91d2a8be4c6f9d1eab27c4f80193_filmsec_admin_only}';
-
-// All admin routes require authentication and admin role
 router.use(authenticateToken);
 router.use(requireAdmin);
 
-// Get admin dashboard stats
 router.get('/stats', async (req: AuthRequest, res: Response) => {
   try {
     const [users, movies, comments, reviews, discussions] = await Promise.all([
@@ -23,18 +17,15 @@ router.get('/stats', async (req: AuthRequest, res: Response) => {
       getDiscussions(),
     ]);
 
-    // Calculate stats
     const totalUsers = users.length;
     const totalMovies = movies.length;
     const totalComments = comments.length;
     const totalReviews = reviews.length;
     const totalDiscussions = discussions.length;
 
-    // Get content breakdown
     const moviesCount = movies.filter(m => m.type === 'movie').length;
     const seriesCount = movies.filter(m => m.type === 'series').length;
 
-    // Get recent activity (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -65,11 +56,9 @@ router.get('/stats', async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Get all users (admin only)
 router.get('/users', async (req: AuthRequest, res: Response) => {
   try {
     const users = await getUsers();
-    // Remove password from response
     const usersWithoutPasswords = users.map(u => ({
       id: u.id,
       email: u.email,
@@ -85,7 +74,6 @@ router.get('/users', async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Get recent content for moderation
 router.get('/moderation', async (req: AuthRequest, res: Response) => {
   try {
     const [comments, reviews, discussions] = await Promise.all([
@@ -94,7 +82,6 @@ router.get('/moderation', async (req: AuthRequest, res: Response) => {
       getDiscussions(),
     ]);
 
-    // Sort by created_at desc and take last 20
     const recentComments = comments
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 20);
@@ -118,40 +105,39 @@ router.get('/moderation', async (req: AuthRequest, res: Response) => {
   }
 });
 
-// CTF: Internal security memo endpoint - returns the flag
-// This simulates an internal security note that only admins can see
-router.get('/security-memo', async (req: AuthRequest, res: Response) => {
+router.get('/security-overview', async (req: AuthRequest, res: Response) => {
   try {
     res.json({
-      memo: {
-        id: 'SEC-2024-001',
-        title: 'Internal Security Configuration',
-        date: new Date().toISOString(),
-        classification: 'ADMIN ONLY',
-        content: 'System configuration backup key for disaster recovery:',
-        // CTF: The flag is returned here for the admin dashboard to display
-        recoveryKey: CTF_FLAG,
-        notes: 'Store this key in a secure location. Do not share with non-admin users.',
+      overview: {
+        authentication: 'JWT with bcrypt password hashing',
+        authorization: 'Role-based access control (admin / user)',
+        databaseAccess: 'Parameterized queries via Supabase client',
+        lastReview: new Date().toISOString().split('T')[0],
       },
+      policies: [
+        'Passwords are never stored in plain text.',
+        'Admin routes require a valid JWT and admin role on every request.',
+        'Service role keys must only be used on the server, never in the browser.',
+        'Rotate JWT_SECRET and database keys if they may have been exposed.',
+      ],
     });
   } catch (error) {
-    console.error('Security memo error:', error);
-    res.status(500).json({ error: 'Failed to fetch security memo' });
+    console.error('Security overview error:', error);
+    res.status(500).json({ error: 'Failed to fetch security overview' });
   }
 });
 
-// CTF: Debug/health check endpoint that shows system status
 router.get('/system-status', async (req: AuthRequest, res: Response) => {
   try {
     res.json({
       status: 'operational',
       timestamp: new Date().toISOString(),
-      version: '1.0.0-ctf',
-      environment: 'production',
-      // CTF: Hidden in a debug field - another place the flag appears
-      _debug: {
-        internalFlag: CTF_FLAG,
-        note: 'CTF Challenge: SQL Injection -> Admin Access -> Find Flag',
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      services: {
+        api: 'online',
+        database: 'connected',
+        authentication: 'active',
       },
     });
   } catch (error) {
@@ -160,8 +146,7 @@ router.get('/system-status', async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Helper function to get top moods
-function getTopMoods(movies: any[]) {
+function getTopMoods(movies: { mood: string }[]) {
   const moodCounts: Record<string, number> = {};
   movies.forEach(m => {
     moodCounts[m.mood] = (moodCounts[m.mood] || 0) + 1;
